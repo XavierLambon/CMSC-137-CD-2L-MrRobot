@@ -1,0 +1,594 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+
+
+/*
+ * The Client with its GUI
+ */
+public class ClientGUI extends JFrame implements ActionListener {
+
+	JPanel gp;
+	Tile[][] tiles;
+
+	ArrayList<Building> bList;
+
+	JPanel map, cmControls;
+	JButton back, save;
+	ArrayList<JRadioButton> bb;
+
+
+	private static final long serialVersionUID = 1L;
+	// will first hold "Username:", later on "Enter message"
+	private JLabel label;
+	// to hold the Username and later on the messages
+	private JTextField tf;
+	// to hold the server address an the port number
+	private JTextField tfServer, tfPort;
+	// to Logout and get the list of the users
+	private JButton login, logout, whoIsIn, customMap;
+	// for the chat room
+	private JTextArea ta;
+	// if it is for connection
+	private boolean connected;
+	// the Client object
+	private Client client;
+	// the default port number
+	private int defaultPort;
+	private String defaultHost;
+
+	private JTextField usernameField;
+	private JTextField passwordField;
+
+	// Constructor connection receiving a socket number
+	ClientGUI(String host, int port) {
+
+		super("Chat Client");
+		defaultPort = port;
+		defaultHost = host;
+		
+		// The NorthPanel with:
+		// the server name anmd the port number
+		JPanel serverAndPort = new JPanel(new GridLayout(1,5, 1, 3));
+		// the two JTextField with default value for server address and port number
+		tfServer = new JTextField(host);
+		tfPort = new JTextField("" + port);
+		tfPort.setHorizontalAlignment(SwingConstants.RIGHT);
+
+		serverAndPort.add(new JLabel("Server Address:  "));
+		serverAndPort.add(tfServer);
+		serverAndPort.add(new JLabel("Port Number:  "));
+		serverAndPort.add(tfPort);
+		serverAndPort.add(new JLabel(""));
+
+		//JPanel northPanel = new JPanel(new GridLayout(3,1));
+		JPanel northPanel = new JPanel();
+		label = new JLabel("Please login first", SwingConstants.CENTER);
+		northPanel.add(label);
+		tf = new JTextField(18);
+		tf.setBackground(Color.WHITE);
+		northPanel.add(tf);
+		northPanel.setBounds(0,0,200,50);
+
+
+		// The CenterPanel which is the chat room
+		//JPanel centerPanel = new JPanel(new GridLayout(1,2));
+		JPanel centerPanel = new JPanel(null);
+		centerPanel.setSize(1000,600);
+		//GridBagConstraints c = new GridBagConstraints();
+
+
+		ta = new JTextArea("Welcome to the Chat room\n", 80, 80);
+		/*
+		c.fill = GridBagConstraints.BOTH;
+		c.weightx = 0.5;
+		c.gridx = 0;
+		c.gridy = 0;
+		c.ipadx = 200;
+		c.ipady = 200;
+		c.gridwidth = 1;
+		*/
+		JScrollPane jsp = new JScrollPane(ta);
+		jsp.setBounds(0,50,200,550);
+		//jsp.setSize(100,100);
+		centerPanel.add(northPanel);
+		centerPanel.add(jsp);
+		
+
+
+		usernameField = new JTextField("Anonymous", 20);
+		passwordField = new JTextField("", 20);
+		// the 3 buttons
+		login = new JButton("Login");
+		login.addActionListener(this);
+		logout = new JButton("Logout");
+		logout.addActionListener(this);
+		logout.setEnabled(false);		// you have to login before being able to logout
+		
+		//game panel
+		gp = new JPanel(new CardLayout());
+		gp.setBounds(200,0,800,600);
+
+		JPanel loginp = new JPanel();
+		loginp.add(usernameField);
+		loginp.add(passwordField);
+		loginp.add(login);
+
+		JPanel mainmenu = new JPanel();
+		mainmenu.add(logout);
+
+		customMap = new JButton("Customize Map");
+		customMap.addActionListener(this);
+		mainmenu.add(customMap);
+
+
+		JPanel cm = new JPanel(null);
+		cm.setPreferredSize(new Dimension(800,600));
+		cm.setSize(800,600);
+		//cm.setBackground(Color.BLUE);
+		cm.setBounds(200,0,800,600);
+		
+		int mapsize = 40;
+		int tilesize = 15;
+		map = new JPanel(new GridLayout(mapsize,mapsize));
+		map.setPreferredSize(new Dimension(600,600));
+		map.setSize(600,600);
+		map.setBounds(0,0,600,600);
+		tiles = new Tile[mapsize][mapsize];
+		for(int i=0; i<mapsize; i++){
+			tiles[i] = new Tile[mapsize];
+			for(int j=0; j<mapsize; j++){
+				tiles[i][j] = new Tile(i, j);
+				tiles[i][j].setPreferredSize(new Dimension(tilesize, tilesize));
+				tiles[i][j].setSize(tilesize, tilesize);
+				tiles[i][j].addActionListener(this);
+				
+				if( (i+j)%2 == 0 ) 
+					tiles[i][j].setBackground(new Color(102, 255, 51));
+				else
+					tiles[i][j].setBackground(new Color(51, 204, 51));
+				
+				map.add(tiles[i][j]);
+			}
+		}
+		
+		cm.add(map);
+
+		
+
+		cmControls = new JPanel(new FlowLayout());
+		cmControls.setSize(200,600);
+		cmControls.setPreferredSize(new Dimension(200,600));
+		cmControls.setBounds(600,0,200,600);
+		//cmControls.setBackground(Color.BLACK);
+		back = new JButton("Main Menu");
+		back.addActionListener(this);
+		cmControls.add(back);
+		cm.add(cmControls);
+
+		createBuildings();
+		bb = new ArrayList<JRadioButton>();
+		//JOptionPane.showMessageDialog(null, "blist size-"+bList.size());
+
+		ButtonGroup group = new ButtonGroup();
+
+		for(int i=0; i<bList.size(); i++){
+			JRadioButton button = new JRadioButton(bList.get(i).name+'-'+bList.get(i).quantity);
+			bb.add(button);
+			cmControls.add(button);
+			group.add(button);
+		}
+		JRadioButton button = new JRadioButton("Remove Building");
+		bb.add(button);
+		cmControls.add(button);
+		group.add(button);
+
+
+		//cm.add(group);
+
+
+
+
+		gp.add(loginp, "Login");
+		gp.add(cm, "Map Customization");
+		gp.add(mainmenu, "Main Menu");
+
+		/*
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.weightx = 0.5;
+		c.gridx = 1;
+		c.gridy = 0;
+		c.ipadx = 200;
+		c.ipady = 200;
+		c.gridwidth = 1;
+		*/
+		centerPanel.add(gp);
+
+
+		ta.setEditable(false);
+		add(centerPanel, BorderLayout.CENTER);
+
+		whoIsIn = new JButton("Who is in");
+		whoIsIn.addActionListener(this);
+		whoIsIn.setEnabled(false);		// you have to login before being able to Who is in
+
+		JPanel southPanel = new JPanel();
+		southPanel.add(whoIsIn);
+
+		JPanel ns = new JPanel(new GridLayout(1,2));
+		ns.add(southPanel);
+		ns.add(new JPanel());
+		//add(ns, BorderLayout.SOUTH);
+
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setSize(1000, 600);
+		setVisible(true);
+		tf.requestFocus();
+
+	}
+
+	// called by the Client to append text in the TextArea 
+	void append(String str) {
+		ta.append(str);
+		ta.setCaretPosition(ta.getText().length() - 1);
+	}
+	// called by the GUI is the connection failed
+	// we reset our buttons, label, textfield
+	void connectionFailed() {
+		login.setEnabled(true);
+		logout.setEnabled(false);
+		whoIsIn.setEnabled(false);
+		label.setText("Please login first");
+		tf.setText("");
+		// reset port number and host name as a construction time
+		tfPort.setText("" + defaultPort);
+		tfServer.setText(defaultHost);
+		// let the user change them
+		tfServer.setEditable(false);
+		tfPort.setEditable(false);
+		// don't react to a <CR> after the username
+		tf.removeActionListener(this);
+		connected = false;
+	}
+
+	public void createBuildings(){
+		bList = new ArrayList<Building>();
+
+		//resource
+		bList.add(new Building("Gold Mine", 3, 3, 960, 7));
+		bList.add(new Building("Elixir Collector", 3, 3, 960, 7));
+		bList.add(new Building("Dark Elixir Drill", 3, 3, 1160, 3));
+		bList.add(new Building("Gold Storage", 3, 3, 2100, 4));
+		bList.add(new Building("Elixir Storage", 3, 3, 2100, 4));
+		bList.add(new Building("Dark Elixir Storage", 3, 3, 3200, 1));
+		bList.add(new Building("Builder's Hut", 2, 2, 250, 5));
+
+		//army
+		bList.add(new Building("Army Camp", 5, 5, 500, 4));
+		bList.add(new Building("Barracks", 3, 3, 860, 4));
+		bList.add(new Building("Dark Barracks", 3, 3, 900, 2));
+		bList.add(new Building("Laboratory", 4, 4, 950, 1));
+		bList.add(new Building("Spell Factory", 3, 3, 615, 1));
+		bList.add(new Building("Barbarian King Altar", 3, 3, 250, 1));
+		bList.add(new Building("Dark Spell Factory", 3, 3, 750, 1));
+		bList.add(new Building("Archer Queen Altar", 3, 3, 250, 1));
+
+		//other
+		bList.add(new Building("Town Hall", 4, 4, 5500, 1));
+		bList.add(new Building("Clan Castle", 3, 3, 3400, 1));
+
+	}
+		
+	/*
+	* Button or JTextField clicked
+	*/
+	public void actionPerformed(ActionEvent e) {
+		Object o = e.getSource();
+		// if it is the Logout button
+		if(o == logout) {
+			client.sendMessage(new ChatMessage(ChatMessage.LOGOUT, ""));
+			ta.setText("");
+
+			CardLayout cl = (CardLayout)(gp.getLayout());
+    		cl.show(gp, "Login");
+			return;
+		}
+		// if it the who is in button
+		if(o == whoIsIn) {
+			client.sendMessage(new ChatMessage(ChatMessage.WHOISIN, ""));				
+			return;
+		}
+
+		if(o == customMap){
+			CardLayout cl = (CardLayout)(gp.getLayout());
+    		cl.show(gp, "Map Customization");
+			return;
+		}
+
+		if(o == back){
+			CardLayout cl = (CardLayout)(gp.getLayout());
+    		cl.show(gp, "Main Menu");
+			return;
+		}
+
+		for(int i=0; i<40; i++){
+			for(int j=0; j<40; j++){
+				if(o == tiles[i][j]){
+					for(int k=0; k<bb.size(); k++){
+						if(bb.get(k).isSelected()){
+							if(bb.get(k).getText().equals("Remove Building")){
+								removeBuilding(i, j);
+								return;
+							}
+
+							insertBuilding(i, j, k);
+							//JOptionPane.showMessageDialog(null, bb.get(k).getText());
+							return;
+						}
+					}
+
+
+					//JOptionPane.showMessageDialog(null, "i-"+i+" j-"+j);
+					return;
+				}
+			}
+		}
+
+		// ok it is coming from the JTextField
+		if(connected) {
+			// just have to send the message
+			client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tf.getText()));				
+			tf.setText("");
+			return;
+		}
+		
+
+		if(o == login) {
+			// ok it is a connection request
+			String username = usernameField.getText().trim();
+			String password = passwordField.getText().trim();
+			// empty username ignore it
+			if(username.length() == 0)
+				return;
+			// empty serverAddress ignore it
+			String server = tfServer.getText().trim();
+			if(server.length() == 0)
+				return;
+			// empty or invalid port numer, ignore it
+			String portNumber = tfPort.getText().trim();
+			if(portNumber.length() == 0)
+				return;
+			int port = 0;
+			try {
+				port = Integer.parseInt(portNumber);
+			}
+			catch(Exception en) {
+				return;   // nothing I can do if port number is not valid
+			}
+
+			// try creating a new Client with GUI
+			client = new Client(server, port, username, password, this);
+			// test if we can start the Client
+			if(!client.start()) 
+				return;
+			tf.setText("");
+			ta.setText("");
+			label.setText("Enter your message below");
+			connected = true;
+			
+			// disable login button
+			login.setEnabled(false);
+			// enable the 2 buttons
+			logout.setEnabled(true);
+			whoIsIn.setEnabled(true);
+			// disable the Server and Port JTextField
+			tfServer.setEditable(false);
+			tfPort.setEditable(false);
+			// Action listener for when the user enter a message
+			tf.addActionListener(this);
+
+			CardLayout cl = (CardLayout)(gp.getLayout());
+    		cl.show(gp, "Main Menu");
+		}
+
+	}
+
+	public void removeBuilding(int i, int j){
+
+		if(tiles[i][j].getBackground() != Color.BLUE){
+
+			JOptionPane.showMessageDialog(null, "There is no building here");
+			return;
+		}
+
+		if(tiles[i][j].value.contains("-")){
+			String tText = tiles[i][j].value;
+			i = Integer.parseInt(tText.split("-")[0]);
+			j = Integer.parseInt(tText.split("-")[1]);
+		}
+
+		int index;
+		for(index=0; index<bb.size(); index++){
+			if(bb.get(index).getText().split("-")[0].equals(tiles[i][j].value)){
+				break;
+			}
+
+		}
+
+		String temp = bb.get(index).getText();
+		String[] parts = temp.split("-");
+		int newQ = Integer.parseInt(parts[1])+1;
+
+		Building tB = bList.get(0);
+		for(int b=0; b<bList.size(); b++){
+			if( bList.get(b).name.equals(tiles[i][j].value) ){
+				tB = bList.get(b);
+				break;
+			}
+		}
+
+		for(int c=0; c<tB.width; c++){
+			for(int r=0; r<tB.height; r++){
+
+				if( (i+c+j+r)%2 == 0 ) 
+					tiles[i+c][j+r].setBackground(new Color(102, 255, 51));
+				else
+					tiles[i+c][j+r].setBackground(new Color(51, 204, 51));
+
+				tiles[i+c][j+r].value = "none"; 
+				bb.get(index).setText(parts[0] + "-" + newQ );
+
+
+			
+				//tiles[i+c][j+r].setBackground(Color.BLUE);
+
+				//String tValue = (c==0 && r==0)? tB.name: i+"-"+j;
+				//System.out.println(tValue);
+				
+				//tiles[i+c][j+r].setValue(tValue);
+			
+			}	
+		}
+
+
+		//System.out.println(i+" - "+j);
+
+	}
+
+	public void insertBuilding(int i, int j, int index){
+		if(tiles[i][j].getBackground() == Color.BLUE){
+
+			JOptionPane.showMessageDialog(null, "There is already a building here");
+			return;
+		}
+
+
+		String temp = bb.get(index).getText();
+		String[] parts = temp.split("-");
+
+
+
+		int newQ = Integer.parseInt(parts[1])-1;
+		if(newQ < 0)
+			return;
+
+		Building tB = bList.get(0);
+		for(int b=0; b<bList.size(); b++){
+			if( bList.get(b).name.equals(parts[0]) ){
+				tB = bList.get(b);
+				System.out.println("here");
+				break;
+			}
+		}
+
+		for(int c=0; c<tB.width; c++){
+			for(int r=0; r<tB.height; r++){
+				if(i+c == 40 || j+r == 40){
+					JOptionPane.showMessageDialog(null, "Placing a building here would be out of bounds");
+					return;
+				}
+
+				if(tiles[i+c][j+r].getBackground() == Color.BLUE){
+					JOptionPane.showMessageDialog(null, "Placing a building here will result to a overlap");
+					return;	
+				}
+			}	
+		}
+
+		for(int c=0; c<tB.width; c++){
+			for(int r=0; r<tB.height; r++){
+				tiles[i+c][j+r].setBackground(Color.BLUE);
+
+				String tValue = (c==0 && r==0)? tB.name: i+"-"+j;
+				System.out.println(tValue);
+				
+				tiles[i+c][j+r].setValue(tValue);
+			}	
+		}
+
+		//tiles[i][j].setBackground(Color.BLUE);
+		bb.get(index).setText(parts[0] + "-" + newQ );
+	}
+
+	// to start the whole thing the server
+	public static void main(String[] args) {
+		String serverAddress = "localhost";
+		int portNumber = 1500;
+
+
+		// depending of the number of arguments provided we fall through
+		switch(args.length) {
+			// > javac Client username portNumber serverAddr
+			case 2:
+				try {
+					portNumber = Integer.parseInt(args[1]);
+				}
+				catch(Exception e) {
+					System.out.println("Invalid port number.");
+					System.out.println("Usage is: > java ClientGUI [serverAddress] [portNumber]");
+					return;
+				}
+			// > javac Client username portNumber
+			case 1:
+				serverAddress = args[0];
+			// > java Client
+			case 0:
+				break;
+			// invalid number of arguments
+			default:
+				System.out.println("Usage is: > java ClientGUI [serverAddress] [portNumber]");
+			return;
+		}
+
+
+		//new ClientGUI("localhost", 1500);
+		new ClientGUI(serverAddress, portNumber);
+	}
+
+}
+
+class Tile extends JButton{
+	String value;
+	int i, j;
+
+	public Tile(int i, int j){
+		this.value = "none";
+		this.i = i;
+		this.j = j;
+		//addActionListener(this);
+	}
+
+	public void setValue(String str){
+		this.value = str;
+	}
+
+
+	public int geti(){
+		return i;
+	}
+
+	public int getj(){
+		return j;
+	}
+
+}
+
+
+class Building{
+	public String name;
+	public int width, height, hp, quantity;
+
+	public Building(String name, int width, int height, int hp, int quantity){
+		this.name = name;
+		this.width = width;
+		this.height = height;
+		this.hp = hp;
+		this.quantity = quantity;
+	}
+
+
+
+
+
+}
