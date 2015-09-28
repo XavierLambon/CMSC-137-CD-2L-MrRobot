@@ -48,10 +48,9 @@ public class ClientGUI extends JFrame implements ActionListener {
 		defaultPort = port;
 		defaultHost = host;
 		
-		// The NorthPanel with:
-		// the server name anmd the port number
+		// the server name and the port number
+		
 		JPanel serverAndPort = new JPanel(new GridLayout(1,5, 1, 3));
-		// the two JTextField with default value for server address and port number
 		tfServer = new JTextField(host);
 		tfPort = new JTextField("" + port);
 		tfPort.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -61,44 +60,34 @@ public class ClientGUI extends JFrame implements ActionListener {
 		serverAndPort.add(new JLabel("Port Number:  "));
 		serverAndPort.add(tfPort);
 		serverAndPort.add(new JLabel(""));
+		
 
-		//JPanel northPanel = new JPanel(new GridLayout(3,1));
+
 		JPanel northPanel = new JPanel();
+
 		label = new JLabel("Please login first", SwingConstants.CENTER);
-		northPanel.add(label);
 		tf = new JTextField(18);
 		tf.setBackground(Color.WHITE);
+		
+		northPanel.add(label);
 		northPanel.add(tf);
 		northPanel.setBounds(0,0,200,50);
 
 
-		// The CenterPanel which is the chat room
-		//JPanel centerPanel = new JPanel(new GridLayout(1,2));
 		JPanel centerPanel = new JPanel(null);
-		centerPanel.setSize(1000,600);
-		//GridBagConstraints c = new GridBagConstraints();
-
 
 		ta = new JTextArea("Welcome to the Chat room\n", 80, 80);
-		/*
-		c.fill = GridBagConstraints.BOTH;
-		c.weightx = 0.5;
-		c.gridx = 0;
-		c.gridy = 0;
-		c.ipadx = 200;
-		c.ipady = 200;
-		c.gridwidth = 1;
-		*/
 		JScrollPane jsp = new JScrollPane(ta);
 		jsp.setBounds(0,50,200,550);
-		//jsp.setSize(100,100);
+		
+		centerPanel.setSize(1000,600);
 		centerPanel.add(northPanel);
 		centerPanel.add(jsp);
 		
 
 
-		usernameField = new JTextField("Anonymous", 20);
-		passwordField = new JTextField("", 20);
+		usernameField = new JTextField("user", 20);
+		passwordField = new JTextField("password", 20);
 		// the 3 buttons
 		login = new JButton("Login");
 		login.addActionListener(this);
@@ -194,15 +183,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 		gp.add(cm, "Map Customization");
 		gp.add(mainmenu, "Main Menu");
 
-		/*
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.weightx = 0.5;
-		c.gridx = 1;
-		c.gridy = 0;
-		c.ipadx = 200;
-		c.ipady = 200;
-		c.gridwidth = 1;
-		*/
+
 		centerPanel.add(gp);
 
 
@@ -396,8 +377,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 	public void removeBuilding(int i, int j){
 
-		if(tiles[i][j].getBackground() != Color.BLUE){
-
+		if(tiles[i][j].getValue().equals("")){
 			JOptionPane.showMessageDialog(null, "There is no building here");
 			return;
 		}
@@ -438,27 +418,14 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 				tiles[i+c][j+r].value = "none"; 
 				bb.get(index).setText(parts[0] + "-" + newQ );
-
-
-			
-				//tiles[i+c][j+r].setBackground(Color.BLUE);
-
-				//String tValue = (c==0 && r==0)? tB.name: i+"-"+j;
-				//System.out.println(tValue);
-				
-				//tiles[i+c][j+r].setValue(tValue);
 			
 			}	
 		}
-
-
-		//System.out.println(i+" - "+j);
-
 	}
 
 	public void insertBuilding(int i, int j, int index){
-		if(tiles[i][j].getBackground() == Color.BLUE){
 
+		if(!tiles[i][j].getValue().equals("")){
 			JOptionPane.showMessageDialog(null, "There is already a building here");
 			return;
 		}
@@ -466,8 +433,6 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 		String temp = bb.get(index).getText();
 		String[] parts = temp.split("-");
-
-
 
 		int newQ = Integer.parseInt(parts[1])-1;
 		if(newQ < 0)
@@ -553,16 +518,14 @@ class Tile extends JButton{
 	int i, j;
 
 	public Tile(int i, int j){
-		this.value = "none";
+		this.value = "";
 		this.i = i;
 		this.j = j;
-		//addActionListener(this);
 	}
 
 	public void setValue(String str){
 		this.value = str;
 	}
-
 
 	public int geti(){
 		return i;
@@ -571,6 +534,10 @@ class Tile extends JButton{
 	public int getj(){
 		return j;
 	}
+
+	public String getValue(){
+		return value;
+	}	
 
 }
 
@@ -586,9 +553,4 @@ class Building{
 		this.hp = hp;
 		this.quantity = quantity;
 	}
-
-
-
-
-
 }

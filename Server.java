@@ -231,8 +231,7 @@ public class Server {
 				//FOR VALIDATION
 				try{
 					Class.forName("org.sqlite.JDBC");
-					c = DriverManager.getConnection("jdbc:sqlite:C:\\Users\\Czar John\\Projects\\137\\chat21\\database\\database.sqlite");	//jdbc:sqlite:absoluteDBpath
-					//c = DriverManager.getConnection("jdbc:sqlite:C:\\Users\\Aspire\\Desktop\\chat21\\database\\database.sqlite");	//jdbc:sqlite:absoluteDBpath
+					c = DriverManager.getConnection("jdbc:sqlite:C:\\Users\\Czar John\\Projects\\137\\coc\\database\\database.sqlite");	//jdbc:sqlite:absoluteDBpath
 					display("Database connection successful.");
 					c.setAutoCommit(true);
 
