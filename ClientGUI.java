@@ -1,7 +1,11 @@
 import javax.swing.*;
+import javax.imageio.*;
+import java.lang.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.*;
 import java.util.*;
+import java.io.*;
 
 
 /*
@@ -416,7 +420,10 @@ public class ClientGUI extends JFrame implements ActionListener {
 				else
 					tiles[i+c][j+r].setBackground(new Color(51, 204, 51));
 
-				tiles[i+c][j+r].value = "none"; 
+				tiles[i+c][j+r].setIcon(null);
+
+
+				tiles[i+c][j+r].value = ""; 
 				bb.get(index).setText(parts[0] + "-" + newQ );
 			
 			}	
@@ -429,6 +436,18 @@ public class ClientGUI extends JFrame implements ActionListener {
 			JOptionPane.showMessageDialog(null, "There is already a building here");
 			return;
 		}
+
+
+		Image image = null;
+		BufferedImage buffered;
+		try{
+			image = ImageIO.read(new File("images/download.png"));
+		}
+		catch(IOException e){
+
+		}
+		buffered = (BufferedImage) image;
+
 
 
 		String temp = bb.get(index).getText();
@@ -461,9 +480,15 @@ public class ClientGUI extends JFrame implements ActionListener {
 			}	
 		}
 
+		int w = buffered.getWidth()/tB.width;
+		int h = buffered.getHeight()/tB.height;
+		System.out.println(buffered.getWidth());
+
 		for(int c=0; c<tB.width; c++){
 			for(int r=0; r<tB.height; r++){
 				tiles[i+c][j+r].setBackground(Color.BLUE);
+
+				tiles[i+c][j+r].setIcon(new ImageIcon(buffered.getSubimage(w*r,h*c,w,h)));
 
 				String tValue = (c==0 && r==0)? tB.name: i+"-"+j;
 				System.out.println(tValue);
