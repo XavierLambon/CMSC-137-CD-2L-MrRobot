@@ -1,7 +1,11 @@
 import javax.swing.*;
+import javax.imageio.*;
+import java.lang.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.*;
 import java.util.*;
+import java.io.*;
 
 
 /*
@@ -44,7 +48,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 	// Constructor connection receiving a socket number
 	ClientGUI(String host, int port) {
 
-		super("Chat Client");
+		super("Clash of Clans");
 		defaultPort = port;
 		defaultHost = host;
 		
@@ -105,11 +109,11 @@ public class ClientGUI extends JFrame implements ActionListener {
 		loginp.add(login);
 
 		JPanel mainmenu = new JPanel();
-		mainmenu.add(logout);
 
 		customMap = new JButton("Customize Map");
 		customMap.addActionListener(this);
 		mainmenu.add(customMap);
+		mainmenu.add(logout);
 
 
 		JPanel cm = new JPanel(null);
@@ -176,9 +180,6 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 		//cm.add(group);
 
-
-
-
 		gp.add(loginp, "Login");
 		gp.add(cm, "Map Customization");
 		gp.add(mainmenu, "Main Menu");
@@ -202,9 +203,17 @@ public class ClientGUI extends JFrame implements ActionListener {
 		ns.add(new JPanel());
 		//add(ns, BorderLayout.SOUTH);
 
+		try {
+		    setIconImage(ImageIO.read(new File("images/logo.png")));
+		}
+		catch (IOException exc) {
+		    exc.printStackTrace();
+		}
+
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setSize(1000, 600);
 		setVisible(true);
+		setResizable(false);
 		tf.requestFocus();
 
 	}
@@ -213,6 +222,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 	void append(String str) {
 		ta.append(str);
 		ta.setCaretPosition(ta.getText().length() - 1);
+		
 	}
 	// called by the GUI is the connection failed
 	// we reset our buttons, label, textfield
@@ -243,7 +253,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 		bList.add(new Building("Gold Storage", 3, 3, 2100, 4));
 		bList.add(new Building("Elixir Storage", 3, 3, 2100, 4));
 		bList.add(new Building("Dark Elixir Storage", 3, 3, 3200, 1));
-		bList.add(new Building("Builder's Hut", 2, 2, 250, 5));
+		bList.add(new Building("Builder Hut", 2, 2, 250, 5));
 
 		//army
 		bList.add(new Building("Army Camp", 5, 5, 500, 4));
@@ -355,24 +365,31 @@ public class ClientGUI extends JFrame implements ActionListener {
 				return;
 			tf.setText("");
 			ta.setText("");
-			label.setText("Enter your message below");
-			connected = true;
-			
-			// disable login button
-			login.setEnabled(false);
-			// enable the 2 buttons
-			logout.setEnabled(true);
-			whoIsIn.setEnabled(true);
-			// disable the Server and Port JTextField
-			tfServer.setEditable(false);
-			tfPort.setEditable(false);
-			// Action listener for when the user enter a message
-			tf.addActionListener(this);
-
-			CardLayout cl = (CardLayout)(gp.getLayout());
-    		cl.show(gp, "Main Menu");
 		}
 
+	}
+
+	public boolean getConnectStatus(){
+		return connected;
+	}
+
+	public void validAuthenticate(){
+		label.setText("Enter your message below");
+		connected = true;
+		
+		// disable login button
+		login.setEnabled(false);
+		// enable the 2 buttons
+		logout.setEnabled(true);
+		whoIsIn.setEnabled(true);
+		// disable the Server and Port JTextField
+		tfServer.setEditable(false);
+		tfPort.setEditable(false);
+		// Action listener for when the user enter a message
+		tf.addActionListener(this);
+
+		CardLayout cl = (CardLayout)(gp.getLayout());
+		cl.show(gp, "Main Menu");
 	}
 
 	public void removeBuilding(int i, int j){
@@ -423,12 +440,24 @@ public class ClientGUI extends JFrame implements ActionListener {
 		}
 	}
 
+	public static BufferedImage resize(BufferedImage image, int width, int height) {
+	    BufferedImage bi = new BufferedImage(width, height, BufferedImage.TRANSLUCENT);
+	    Graphics2D g2d = (Graphics2D) bi.createGraphics();
+	    g2d.addRenderingHints(new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY));
+	    g2d.drawImage(image, 0, 0, width, height, null);
+	    g2d.dispose();
+	    return bi;
+	}
+
 	public void insertBuilding(int i, int j, int index){
 
 		if(!tiles[i][j].getValue().equals("")){
 			JOptionPane.showMessageDialog(null, "There is already a building here");
 			return;
 		}
+
+
+
 
 
 		String temp = bb.get(index).getText();
@@ -442,10 +471,21 @@ public class ClientGUI extends JFrame implements ActionListener {
 		for(int b=0; b<bList.size(); b++){
 			if( bList.get(b).name.equals(parts[0]) ){
 				tB = bList.get(b);
-				System.out.println("here");
+				//System.out.println("here");
 				break;
 			}
 		}
+
+		Image image = null;
+		BufferedImage buffered;
+		try{
+			image = ImageIO.read(new File("images/"+tB.name.replace(" ", "_")+".png"));
+		}
+		catch(IOException e){
+
+		}
+		buffered = (BufferedImage) image;
+
 
 		for(int c=0; c<tB.width; c++){
 			for(int r=0; r<tB.height; r++){
@@ -454,19 +494,27 @@ public class ClientGUI extends JFrame implements ActionListener {
 					return;
 				}
 
-				if(tiles[i+c][j+r].getBackground() == Color.BLUE){
+				if(!tiles[i+c][j+r].getValue().equals("")){
 					JOptionPane.showMessageDialog(null, "Placing a building here will result to a overlap");
 					return;	
 				}
 			}	
 		}
 
-		for(int c=0; c<tB.width; c++){
-			for(int r=0; r<tB.height; r++){
-				tiles[i+c][j+r].setBackground(Color.BLUE);
+		double w = buffered.getWidth()/tB.width;
+		double h = buffered.getHeight()/tB.height;
 
+		//System.out.println("width:"+buffered.getWidth());
+		//System.out.println("height:"+buffered.getHeight());
+		//System.out.println("w:"+w+"  h:"+h);
+
+		for(int c=0; c<tB.width; c++){
+			for(int r=0; r<tB.height; r++){				
+				tiles[i+c][j+r].setBackground(new Color(51, 204, 51));
+				tiles[i+c][j+r].setIcon(new ImageIcon(  resize( buffered.getSubimage((int)w*r,(int)h*c,(int)w,(int)h), tiles[i+c][j+r].getWidth(), tiles[i+c][j+r].getHeight() )  )   );
+					
 				String tValue = (c==0 && r==0)? tB.name: i+"-"+j;
-				System.out.println(tValue);
+				//System.out.println(tValue);
 				
 				tiles[i+c][j+r].setValue(tValue);
 			}	
@@ -521,6 +569,9 @@ class Tile extends JButton{
 		this.value = "";
 		this.i = i;
 		this.j = j;
+
+		setBorderPainted(false);
+		setFocusPainted(false);
 	}
 
 	public void setValue(String str){

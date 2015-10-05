@@ -2,7 +2,6 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 
-import java.sql.*;
 
 /*
  * The Client that can be run both as a console or a GUI
@@ -14,17 +13,13 @@ public class Client  {
 	private ObjectOutputStream sOutput;		// to write on the socket
 	private Socket socket;
 
-	//for the SQLite
-	private Connection c = null;
-	private Statement stmt = null;
-	private String sql = null;
-
 	// if I use a GUI or not
 	private ClientGUI cg;
 	
 	// the server, the port and the username
 	private String server, username, password;
 	private int port;
+	private boolean validated  = false;
 
 	/*
 	 *  Constructor called by console mode
@@ -145,6 +140,7 @@ public class Client  {
 			cg.connectionFailed();
 			
 	}
+
 	/*
 	 * To start the Client in console mode use one of the following command
 	 * > java Client
@@ -236,22 +232,37 @@ public class Client  {
 
 		public void run() {
 			while(true) {
+
 				try {
-					String msg = (String) sInput.readObject();
-					// if console mode print the message and add back the prompt
-					if(cg == null) {
-						System.out.println(msg);
-						System.out.print("> ");
+					Object serverOutput[] = (Object[])sInput.readObject();
+					int isValid = (int)serverOutput[0];
+					if(isValid == 3){
+						validated = true;
 					}
-					else {
-						cg.append(msg);
+					if(validated){	
+						// if console mode print the message and add back the prompt
+						if(!cg.getConnectStatus()){
+							cg.validAuthenticate();	//the user has been validated by the server
+						}						
+						String msg = (String)serverOutput[1];
+						if(cg == null) {
+							System.out.println(msg);
+							System.out.print("> ");
+						}
+						else if(msg.length() != 0){
+							cg.append(msg);
+						}
+					}else{
+						//NOT VALID
+						disconnect();
 					}
+					
 				}
 				catch(IOException e) {
 					display("Server has close the connection: " + e);
 					if(cg != null) 
 						cg.connectionFailed();
-					break;
+					break;	
 				}
 				// can't happen with a String object but need the catch anyhow
 				catch(ClassNotFoundException e2) {

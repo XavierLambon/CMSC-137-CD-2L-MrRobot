@@ -249,6 +249,11 @@ public class Server {
 					}
 					if(name.equals("")){	//no results found
 						display("Username does not exist.");
+						Object input[] = new Object[2];
+						input[0] = 1;
+						input[1] = new String("");
+						sOutput.writeObject(input);
+						disconnect();
 						c.close();
 					}else{
 						if(name.equals(username) && password.equals(this.password)){	
@@ -256,9 +261,18 @@ public class Server {
 							System.out.println("Logged in successful. Welcome "+name+"!");
 							display("Logged in successful. Welcome "+name+"!");
 							System.out.println("Username: "+username+" Password: "+password);
+							Object input[] = new Object[2];
+							input[0] = 3;
+							input[1] = new String("");
+							sOutput.writeObject(input);
 							
 						}else{
 							display("Invalid password.");
+							Object input[] = new Object[2];
+							input[0] = 2;
+							input[1] = new String("");
+							sOutput.writeObject(input);
+							disconnect();
 							c.close();
 						}
 					}
@@ -277,6 +291,21 @@ public class Server {
 			catch (ClassNotFoundException e) {
 			}
             date = new Date().toString() + "\n";
+		}
+
+		public void disconnect(){
+			try { 
+				if(sInput != null) sInput.close();
+			}
+			catch(Exception e) {} // not much else I can do
+			try {
+				if(sOutput != null) sOutput.close();
+			}
+			catch(Exception e) {} // not much else I can do
+	        try{
+				if(socket != null) socket.close();
+			}
+			catch(Exception e) {} // not much else I can do
 		}
 
 		// what will run forever
@@ -352,7 +381,10 @@ public class Server {
 			}
 			// write the message to the stream
 			try {
-				sOutput.writeObject(msg);
+				Object input[] = new Object[2];
+				input[0] = 3;
+				input[1] = msg;
+				sOutput.writeObject(input);
 			}
 			// if an error occurs, do not abort just inform the user
 			catch(IOException e) {
