@@ -150,15 +150,18 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 		
 
-		cmControls = new JPanel(new FlowLayout());
+		cmControls = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		cmControls.setSize(200,600);
 		cmControls.setPreferredSize(new Dimension(200,600));
 		cmControls.setBounds(600,0,200,600);
 		//cmControls.setBackground(Color.BLACK);
 		back = new JButton("Main Menu");
+		back.setSize(150,30);
+		back.setPreferredSize(new Dimension(150,30));
 		back.addActionListener(this);
 		cmControls.add(back);
-		cm.add(cmControls);
+		
+
 
 		createBuildings();
 		bb = new ArrayList<JRadioButton>();
@@ -177,7 +180,11 @@ public class ClientGUI extends JFrame implements ActionListener {
 		cmControls.add(button);
 		group.add(button);
 
-
+		JScrollPane jsp2 = new JScrollPane(cmControls);
+		jsp2.setSize(200,600);
+		jsp2.setPreferredSize(new Dimension(200,600));
+		jsp2.setBounds(600,0,200,600);
+		cm.add(jsp2);
 		//cm.add(group);
 
 		gp.add(loginp, "Login");
@@ -435,7 +442,6 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 				tiles[i+c][j+r].setIcon(null);
 
-
 				tiles[i+c][j+r].value = ""; 
 				bb.get(index).setText(parts[0] + "-" + newQ );
 			
@@ -460,18 +466,6 @@ public class ClientGUI extends JFrame implements ActionListener {
 		}
 
 
-<<<<<<< HEAD
-=======
-		Image image = null;
-		BufferedImage buffered;
-		try{
-			image = ImageIO.read(new File("images/download.png"));
-		}
-		catch(IOException e){
-
-		}
-		buffered = (BufferedImage) image;
->>>>>>> 109432473c9b8623c501c2be0b4f51eb351306ce
 
 
 
@@ -516,7 +510,6 @@ public class ClientGUI extends JFrame implements ActionListener {
 			}	
 		}
 
-<<<<<<< HEAD
 		double w = buffered.getWidth()/tB.width;
 		double h = buffered.getHeight()/tB.height;
 
@@ -529,18 +522,6 @@ public class ClientGUI extends JFrame implements ActionListener {
 				tiles[i+c][j+r].setBackground(new Color(51, 204, 51));
 				tiles[i+c][j+r].setIcon(new ImageIcon(  resize( buffered.getSubimage((int)w*r,(int)h*c,(int)w,(int)h), tiles[i+c][j+r].getWidth(), tiles[i+c][j+r].getHeight() )  )   );
 					
-=======
-		int w = buffered.getWidth()/tB.width;
-		int h = buffered.getHeight()/tB.height;
-		System.out.println(buffered.getWidth());
-
-		for(int c=0; c<tB.width; c++){
-			for(int r=0; r<tB.height; r++){
-				tiles[i+c][j+r].setBackground(Color.BLUE);
-
-				tiles[i+c][j+r].setIcon(new ImageIcon(buffered.getSubimage(w*r,h*c,w,h)));
-
->>>>>>> 109432473c9b8623c501c2be0b4f51eb351306ce
 				String tValue = (c==0 && r==0)? tB.name: i+"-"+j;
 				//System.out.println(tValue);
 				
