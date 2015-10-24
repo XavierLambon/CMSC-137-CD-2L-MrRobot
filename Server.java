@@ -26,6 +26,9 @@ public class Server {
 	private int port;
 	// the boolean that will be turned of to stop the server
 	private boolean keepGoing;
+
+	//for the database path (dynamic)
+	private String path;
 	
 
 	//for the SQLite
@@ -46,6 +49,19 @@ public class Server {
 		this.sg = sg;
 		// the port
 		this.port = port;
+		// to display hh:mm:ss
+		sdf = new SimpleDateFormat("HH:mm:ss");
+		// ArrayList for the Client list
+		al = new ArrayList<ClientThread>();
+	}
+
+	public Server(int port, ServerGUI sg, String path) {
+		// GUI or not
+		this.sg = sg;
+		// the port
+		this.port = port;
+		//the path for the database
+		this.path = path;
 		// to display hh:mm:ss
 		sdf = new SimpleDateFormat("HH:mm:ss");
 		// ArrayList for the Client list
@@ -231,7 +247,7 @@ public class Server {
 				//FOR VALIDATION
 				try{
 					Class.forName("org.sqlite.JDBC");
-					c = DriverManager.getConnection("jdbc:sqlite:C:\\Users\\Czar John\\Projects\\137\\coc\\database\\database.sqlite");	//jdbc:sqlite:absoluteDBpath
+					c = DriverManager.getConnection("jdbc:sqlite:"+path);	//jdbc:sqlite:absoluteDBpath
 					display("Database connection successful.");
 					c.setAutoCommit(true);
 

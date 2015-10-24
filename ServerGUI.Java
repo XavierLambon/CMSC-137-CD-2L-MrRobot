@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.*;
 
 /*
  * The server as a GUI
@@ -10,12 +11,21 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 	private static final long serialVersionUID = 1L;
 	// the stop and start buttons
 	private JButton stopStart;
+
+	//for Managing Accounts
+	private JButton accounts;
+
 	// JTextArea for the chat room and the events
 	private JTextArea chat, event;
 	// The port number
 	private JTextField tPortNumber;
 	// my server
 	private Server server;
+
+	private boolean isManage;
+
+	private JPanel cardlayout;
+	private CardLayout c1;
 	
 	
 	// server constructor that receive the port to listen to for connection as parameter
@@ -32,7 +42,33 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 		stopStart.addActionListener(this);
 		north.add(stopStart);
 		add(north, BorderLayout.NORTH);
+
+		// handles the button for managing accounts
+		accounts = new JButton("Manage Accounts");
+		north.add(accounts);
+
+		accounts.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e){
+				if(!isManage){
+					accounts.setText("Go Back");
+					isManage = true;
+					c1.show(cardlayout, "2");
+				}else{
+					accounts.setText("Manage Accounts");
+					isManage = false;
+					c1.show(cardlayout, "1");
+				}
+			}
+		});
+
+		//initially hides this button, and shows again once the server is successfully started
+		accounts.hide();
 		
+		// enables the panel switch between the manage account and the center panel (which contains the event and chat room)
+		cardlayout = new JPanel();
+		c1 = new CardLayout();
+		cardlayout.setLayout(c1);
+
 		// the event and chat room
 		JPanel center = new JPanel(new GridLayout(2,1));
 		chat = new JTextArea(80,80);
@@ -43,8 +79,20 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 		event.setEditable(false);
 		appendEvent("Events log.\n");
 		center.add(new JScrollPane(event));	
-		add(center);
 		
+		//for the manage account interface
+		JPanel accountPanel = new JPanel();
+
+
+		cardlayout.add(center, "1");
+		cardlayout.add(accountPanel, "2");
+
+		add(cardlayout);
+
+		c1.show(cardlayout, "1");
+
+		isManage = false;
+
 		// need to be informed when the user click the close button on the frame
 		addWindowListener(this);
 		setSize(400, 600);
@@ -71,9 +119,61 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 			server = null;
 			tPortNumber.setEditable(true);
 			stopStart.setText("Start");
+
+			accounts.setText("Manage Accounts");
+			c1.show(cardlayout, "1");
+			isManage = false;
+
+			accounts.hide();
 			return;
 		}
-      	// OK start the server	
+		//checks first if the location of the database file is already set
+		File f = new File("databaseLocation.txt");
+		JFileChooser openFile;
+		if(!f.exists()){
+			appendEvent("Database location not defined. Please set location.");
+			openFile = new JFileChooser();
+            if(openFile.showOpenDialog(null) == JFileChooser.APPROVE_OPTION){
+            	//writes the location from the text file
+            	try{
+	            	FileWriter fw = new FileWriter("databaseLocation.txt");
+					BufferedWriter bw = new BufferedWriter(fw);
+					bw.write(openFile.getSelectedFile().getAbsolutePath());
+					bw.close();
+				}catch(IOException e1){
+					e1.printStackTrace();
+				}
+            }
+            
+		}
+		
+		String path = "";
+		try (BufferedReader br = new BufferedReader(new FileReader("databaseLocation.txt"))){
+			path = br.readLine();
+			File f1 = new File(path);
+
+			//checks if the contents of the string stored in the text file is valid (does not check if it's a .sqlite file though. will implement in the future)
+			if(!f1.exists()){
+				appendEvent("Database location is incorrect/corrupted. Please reset location.");
+				openFile = new JFileChooser();
+		        if(openFile.showOpenDialog(null) == JFileChooser.APPROVE_OPTION){
+		        	//rewrites the location from the text file
+		        	try{
+		            	FileWriter fw = new FileWriter("databaseLocation.txt");
+						BufferedWriter bw = new BufferedWriter(fw);
+						bw.write(openFile.getSelectedFile().getAbsolutePath());
+						bw.close();
+					}catch(IOException e1){
+						e1.printStackTrace();
+					}
+		        }
+			}
+			path = path.replace("\\", "\\\\");
+
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		// OK start the server	
 		int port;
 		try {
 			port = Integer.parseInt(tPortNumber.getText().trim());
@@ -83,11 +183,14 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 			return;
 		}
 		// ceate a new Server
-		server = new Server(port, this);
+		server = new Server(port, this, path);
 		// and start it as a thread
 		new ServerRunning().start();
 		stopStart.setText("Stop");
+		accounts.show();
 		tPortNumber.setEditable(false);
+		
+      	
 	}
 	
 	// entry point to start the Server
@@ -127,7 +230,9 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 	 */
 	class ServerRunning extends Thread {
 		public void run() {
-			server.start();         // should execute until if fails
+
+			// should execute until if fails
+			server.start();
 			// the server failed
 			stopStart.setText("Start");
 			tPortNumber.setEditable(true);
