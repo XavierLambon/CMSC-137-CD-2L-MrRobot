@@ -3,6 +3,13 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 
+//for the SQLite
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.ResultSet;
+
 /*
  * The server as a GUI
  */
@@ -12,9 +19,6 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 	// the stop and start buttons
 	private JButton stopStart;
 
-	//for Managing Accounts
-	private JButton accounts;
-
 	// JTextArea for the chat room and the events
 	private JTextArea chat, event;
 	// The port number
@@ -22,10 +26,16 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 	// my server
 	private Server server;
 
+	//for Managing Accounts
+	private JButton accounts;
 	private boolean isManage;
-
 	private JPanel cardlayout;
 	private CardLayout c1;
+
+	private JTextField username, password;
+	private JButton createAccount;
+
+	private String path;
 	
 	
 	// server constructor that receive the port to listen to for connection as parameter
@@ -80,9 +90,50 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 		appendEvent("Events log.\n");
 		center.add(new JScrollPane(event));	
 		
-		//for the manage account interface
+		//for the manage account interface (needs to improve the layout)
 		JPanel accountPanel = new JPanel();
+		accountPanel.add(new JLabel("Username: "));
+		username = new JTextField(15);
+		accountPanel.add(username, BorderLayout.NORTH);
+		accountPanel.add(new JLabel("password: "));
+		password = new JTextField(15);
+		accountPanel.add(password);
+		createAccount = new JButton("Create Account");
+		accountPanel.add(createAccount);
 
+		createAccount.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e){
+				//Handles the creation of an account
+				Connection c = null;
+				Statement stmt = null;
+				try{
+					Class.forName("org.sqlite.JDBC");
+					c = DriverManager.getConnection("jdbc:sqlite:"+path);	//jdbc:sqlite:absoluteDBpath
+					c.setAutoCommit(true);
+
+					stmt = c.createStatement();
+
+					ResultSet rs = stmt.executeQuery("SELECT * FROM ACCOUNT WHERE name = '"+username.getText().trim()+"';");
+					String name = "";
+					while(rs.next()){
+						//getInt, getString, getFloat~
+						name = rs.getString("name");
+
+					}
+					if(name.equals("")){	//no results found
+						stmt.executeUpdate("INSERT INTO ACCOUNT (name, password) VALUES ('"+username.getText().trim()+"', '"+password.getText().trim()+"')");
+						JOptionPane.showMessageDialog(null, "Account successfully added!");
+					}else{
+						JOptionPane.showMessageDialog(null, "Account name already exists!");
+					}
+					c.close();
+					
+				}catch(Exception e2){
+					System.err.println(e2.getClass().getName() + ": " + e2.getMessage());
+					System.exit(0);
+				}
+			}
+		});
 
 		cardlayout.add(center, "1");
 		cardlayout.add(accountPanel, "2");
@@ -131,7 +182,7 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 		File f = new File("databaseLocation.txt");
 		JFileChooser openFile;
 		if(!f.exists()){
-			appendEvent("Database location not defined. Please set location.");
+			JOptionPane.showMessageDialog(null, "Database location not defined. Please set location.");
 			openFile = new JFileChooser();
             if(openFile.showOpenDialog(null) == JFileChooser.APPROVE_OPTION){
             	//writes the location from the text file
@@ -147,14 +198,14 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
             
 		}
 		
-		String path = "";
+		path = "";
 		try (BufferedReader br = new BufferedReader(new FileReader("databaseLocation.txt"))){
 			path = br.readLine();
 			File f1 = new File(path);
 
 			//checks if the contents of the string stored in the text file is valid (does not check if it's a .sqlite file though. will implement in the future)
 			if(!f1.exists()){
-				appendEvent("Database location is incorrect/corrupted. Please reset location.");
+				JOptionPane.showMessageDialog(null, "Database location is incorrect/corrupted. Please reset location.");
 				openFile = new JFileChooser();
 		        if(openFile.showOpenDialog(null) == JFileChooser.APPROVE_OPTION){
 		        	//rewrites the location from the text file
