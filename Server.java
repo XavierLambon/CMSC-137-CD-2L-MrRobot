@@ -223,12 +223,18 @@ public class Server {
 		// the date I connect
 		String date;
 
+		// the client ip address
+		String ipAdress;
+
 		// Constructore
 		ClientThread(Socket socket) {
 			// a unique id
 			id = ++uniqueId;
 			this.socket = socket;
 			/* Creating both Data Stream */
+			//CURRENTLY HERE
+			ipAdress = socket.getRemoteSocketAddress().toString();
+			System.out.println("ClientIP: "+ipAdress);
 			System.out.println("Thread trying to create Object Input/Output Streams");
 			try
 			{

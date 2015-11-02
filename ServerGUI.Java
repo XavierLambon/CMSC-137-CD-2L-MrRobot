@@ -32,6 +32,10 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 	private JPanel cardlayout;
 	private CardLayout c1;
 
+	//for the Network Analyzer
+	private JButton analyze;
+	private boolean isAnalyze;
+
 	private JTextField username, password;
 	private JButton createAccount;
 
@@ -62,17 +66,40 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 				if(!isManage){
 					accounts.setText("Go Back");
 					isManage = true;
+					analyze.hide();
 					c1.show(cardlayout, "2");
 				}else{
 					accounts.setText("Manage Accounts");
 					isManage = false;
+					analyze.show();
 					c1.show(cardlayout, "1");
 				}
 			}
 		});
 
+		//handles the network analyzer
+		analyze = new JButton("Network Analyzer");
+		north.add(analyze);
+		analyze.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e){
+				if(!isAnalyze){
+					analyze.setText("Go Back");
+					isAnalyze = true;
+					accounts.hide();
+					c1.show(cardlayout, "3");
+				}else{
+					analyze.setText("Network Analyzer");
+					isAnalyze = false;
+					accounts.show();
+					c1.show(cardlayout, "1");
+				}
+			}
+		});
+
+
 		//initially hides this button, and shows again once the server is successfully started
 		accounts.hide();
+		analyze.hide();
 		
 		// enables the panel switch between the manage account and the center panel (which contains the event and chat room)
 		cardlayout = new JPanel();
@@ -90,7 +117,7 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 		appendEvent("Events log.\n");
 		center.add(new JScrollPane(event));	
 		
-		//for the manage account interface (needs to improve the layout)
+		//for the manage account interface (to CJ: need your help in improving the layout)
 		JPanel accountPanel = new JPanel();
 		accountPanel.add(new JLabel("Username: "));
 		username = new JTextField(15);
@@ -135,18 +162,23 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 			}
 		});
 
+		//creates a new panel for network analyzer (i'll handle the layout on this one -Xavier)
+		NetworkAnalyzer analyzePanel = new NetworkAnalyzer();
+
 		cardlayout.add(center, "1");
 		cardlayout.add(accountPanel, "2");
+		cardlayout.add(analyzePanel, "3");
 
 		add(cardlayout);
 
 		c1.show(cardlayout, "1");
 
 		isManage = false;
+		isAnalyze = false;
 
 		// need to be informed when the user click the close button on the frame
 		addWindowListener(this);
-		setSize(400, 600);
+		setSize(550, 600);
 		setVisible(true);
 	}		
 
@@ -174,8 +206,10 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 			accounts.setText("Manage Accounts");
 			c1.show(cardlayout, "1");
 			isManage = false;
+			isAnalyze = false;
 
 			accounts.hide();
+			analyze.hide();
 			return;
 		}
 		//checks first if the location of the database file is already set
@@ -239,6 +273,7 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 		new ServerRunning().start();
 		stopStart.setText("Stop");
 		accounts.show();
+		analyze.show();
 		tPortNumber.setEditable(false);
 		
       	
