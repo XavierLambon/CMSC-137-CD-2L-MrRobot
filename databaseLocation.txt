@@ -1,1 +1,1 @@
-C:\Users\user1\Desktop\CMSC-137-CD-2L-MrRobot\database\database.sqlite
+/home/user/Desktop/coc/database/database.sqlite
