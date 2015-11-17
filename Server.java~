@@ -222,7 +222,8 @@ public class Server {
 	
 	//A thread for the UDP. CURRENTLY STUCK HERE...
 	public static class UDPThread extends Thread{
-		
+		byte[] receiveData = new byte[1024];
+		byte[] sendData = new byte[1024];
 		
 		UDPThread(){
 			//yay~
@@ -232,17 +233,12 @@ public class Server {
 			while(true){
 				try{
 					//AGAIN, CURRENTLY HERE. FREE THE RECEIVE AND SENDDATA
-					byte[] receiveData = new byte[1024];
-					byte[] sendData = new byte[1024];
+					System.out.println("haha~");
 					DatagramPacket sendPacket, receivePacket;
 					receivePacket = new DatagramPacket(receiveData, receiveData.length);
 					serverUDP.receive(receivePacket);
-					String msgFromClient = new String(receivePacket.getData());	//i may need to trim the excess null chars at the end
-					System.out.println("Message from a client: "+msgFromClient);
-
-					System.out.println("Client IP: "+receivePacket.getAddress());
-					System.out.println("Client Port: "+receivePacket.getPort());
-					System.out.println("Client socketAddress: "+receivePacket.getSocketAddress());
+					String msgFromClient = new String(receivePacket.getData());
+					System.out.println(msgFromClient);
 				}catch(IOException e){
 					System.out.println("error: "+e);
 				}
