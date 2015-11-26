@@ -1,1 +1,1 @@
-C:\Users\user1\Desktop\wow2\database\database.sqlite
+C:\Users\COMMIT\Desktop\coc\database\database.sqlite
