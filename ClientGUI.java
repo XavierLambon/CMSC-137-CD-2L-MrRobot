@@ -717,8 +717,8 @@ class Unit {
 	private int range;
 	private javax.swing.Timer timer;
 	private ArrayList<Coordinate> path;
-	private int width = 5;
-    private int height = 5;
+	private int width = 7;
+    private int height = 7;
     private Color color;
 
 	public Unit(Coordinate pos, int range, javax.swing.Timer timer, ArrayList<Coordinate> path){
@@ -765,6 +765,7 @@ class Unit {
 }
 
 class Map extends JPanel implements ActionListener {
+	int tileCount = 40;
     int dimension;
     Coordinate goal; 
     int range = 30;
@@ -810,17 +811,30 @@ class Map extends JPanel implements ActionListener {
     }
 
     protected void paintComponent(Graphics g) {
-        super.paintComponent(g);       
+        super.paintComponent(g); 
+
+        int td = (int) dimension/tileCount;
+        for(int i=0; i<tileCount; i++){
+        	for(int j=0; j<tileCount; j++){
+		        if( (i+j)%2 == 0 ) 
+					g.setColor(new Color(102, 255, 51));
+				else
+					g.setColor(new Color(51, 204, 51));
+				g.fillRect(i*td, j*td, td, td);     
+        	}
+        } 
+
 
         //paints units
 		for(Unit unit : unitArr){
 			g.setColor(unit.getColor());
-        	g.fillRect(unit.getPos().getX(),unit.getPos().getY(),unit.getWidth(),unit.getWidth());
+        	g.fillRect(unit.getPos().getX(),unit.getPos().getY(),unit.getWidth(),unit.getHeight());
 		}
 
 		//paints the goal
-        g.setColor(Color.GREEN);
-        g.fillRect(goal.getX(),goal.getY(),5,5);
+        g.setColor(Color.RED);
+        g.fillRect(goal.getX() - ((int)td/2),goal.getY()- ((int)td/2),td,td);
+        //g.fillRect(goal.getX(),goal.getY(),td,td);
     }
 
 
