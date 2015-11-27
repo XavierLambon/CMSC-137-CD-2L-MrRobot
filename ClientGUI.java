@@ -719,6 +719,7 @@ class Unit {
 	private ArrayList<Coordinate> path;
 	private int width = 5;
     private int height = 5;
+    private Color color;
 
 	public Unit(Coordinate pos, int range, javax.swing.Timer timer, ArrayList<Coordinate> path){
 		this.pos = pos;
@@ -726,6 +727,12 @@ class Unit {
 		this.timer = timer;
 		this.path = path;
 		this.timer.start(); 
+
+        Random rand = new Random();
+		float r = rand.nextFloat();
+		float gr = rand.nextFloat();
+		float b = rand.nextFloat();
+		this.color = new Color(r, gr, b);
 	}
 
 	public Coordinate getPos(){
@@ -746,6 +753,9 @@ class Unit {
 	public ArrayList<Coordinate> getPath(){
 		return this.path;
 	}
+	public Color getColor(){
+		return this.color;
+	}
 	public void stopTimer(){
 		this.timer.stop();
 	}
@@ -755,16 +765,6 @@ class Unit {
 }
 
 class Map extends JPanel implements ActionListener {
-
-    private int squareX = 20;
-    private int squareY = 20;
-    private int squareW = 5;
-    private int squareH = 5;
-    Coordinate path;
-    ArrayList<Coordinate> pathArr;
-    int step;
-    javax.swing.Timer timer;
-    int tFlag = 0;
     int dimension;
     Coordinate goal; 
     int range = 30;
@@ -781,89 +781,27 @@ class Map extends JPanel implements ActionListener {
 
         addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
-            	System.out.println("Clicked here");
             	Unit tempUnit = new Unit(new Coordinate(e.getX(),e.getY()), 200, new javax.swing.Timer(3, me), aStarSearch(new Coordinate(e.getX(),e.getY()), goal));
             	unitArr.add(tempUnit);
-
-            	/*
-                moveSquare(e.getX(),e.getY());
-                
-                path = aStarSearch(new Coordinate(e.getX(), e.getY()), goal);
-                pathArr = new ArrayList<Coordinate>();
-                do{
-                    pathArr.add(0, path);
-                    path = path.parent;
-                }while(path != null);
-                step = 0;
-                timer.setDelay(3);
-                timer.start(); 
-                */
-                
             }
         });
-
-     	/*
-        path = aStarSearch(new Coordinate(squareX, squareY), goal);
-        pathArr = new ArrayList<Coordinate>();
-        do{
-            //System.out.println(tC.getX()+", "+tC.getY());
-            pathArr.add(0, path);
-            path = path.parent;
-        }while(path != null);
-        step = 0;
-
-        timer = new javax.swing.Timer(3, this);
-        timer.start(); 
-        
-        */
-
     }
 
     public void actionPerformed(ActionEvent e) {
-    	System.out.println("action");
-
-    	/*
-        if(e.getSource() == timer && step < pathArr.size()){
-            int OFFSET = 1;
-            Coordinate temp = pathArr.get(step);
-            step++;
-            repaint(squareX,squareY,squareW+OFFSET,squareH+OFFSET);
-            squareX=temp.getX();
-            squareY=temp.getY();
-            repaint(squareX,squareY,squareW+OFFSET,squareH+OFFSET);
-            //tFlag = 1;
-        }
-        else if(e.getSource() == timer){
-            System.out.println("Timer is paused");
-            timer.stop(); 
-        }
-        */
 
         for(Unit unit : unitArr){
         	if(e.getSource() == unit.getTimer()){
         		if(unit.getPath().size() > 0){
         			int OFFSET = 1;
 		            repaint(unit.getPos().getX(),unit.getPos().getY(),unit.getWidth()+OFFSET,unit.getHeight()+OFFSET);
-		     		System.out.println("Moving");
 		            unit.move();
 		            repaint(unit.getPos().getX(),unit.getPos().getY(),unit.getWidth()+OFFSET,unit.getHeight()+OFFSET);
         		}
         		else{
-		     		System.out.println("Movement done");
         			unit.stopTimer();
         		}
         	}
         }
-    }
-    
-    private void moveSquare(int x, int y) {
-        int OFFSET = 1;
-        if ((squareX!=x) || (squareY!=y)) {
-            repaint(squareX,squareY,squareW+OFFSET,squareH+OFFSET);
-            squareX=x;
-            squareY=y;
-            repaint(squareX,squareY,squareW+OFFSET,squareH+OFFSET);
-        } 
     }
     
 
@@ -871,28 +809,18 @@ class Map extends JPanel implements ActionListener {
         return new Dimension(dimension,dimension);
     }
 
-  
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);       
-        //g.setColor(Color.RED);
-        //g.fillRect(squareX,squareY,squareW,squareH);
-        //g.setColor(Color.BLACK);
-        //g.drawRect(squareX,squareY,squareW,squareH);
 
-        Random rand = new Random();
-
+        //paints units
 		for(Unit unit : unitArr){
-	        float r = rand.nextFloat();
-			float gr = rand.nextFloat();
-			float b = rand.nextFloat();
-			Color randomColor = new Color(r, gr, b);
-			g.setColor(randomColor);
+			g.setColor(unit.getColor());
         	g.fillRect(unit.getPos().getX(),unit.getPos().getY(),unit.getWidth(),unit.getWidth());
 		}
 
-
+		//paints the goal
         g.setColor(Color.GREEN);
-        g.fillRect(goal.getX(),goal.getY(),squareW,squareH);
+        g.fillRect(goal.getX(),goal.getY(),5,5);
     }
 
 
@@ -929,9 +857,8 @@ class Map extends JPanel implements ActionListener {
 
                 if (dist(newC,goal) < range){
                     System.out.println("Done searching");
-                    pathArr = new ArrayList<Coordinate>();
+                    ArrayList<Coordinate> pathArr = new ArrayList<Coordinate>();
 			        do{
-			            //System.out.println(tC.getX()+", "+tC.getY());
 			            pathArr.add(0, newC);
 			            newC = newC.parent;
 			        }while(newC != null);
@@ -987,7 +914,6 @@ class Map extends JPanel implements ActionListener {
         int y1 = p1.getY();
         int y2 = p2.getY();
         return (int) Math.round(Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)));
-        //return (Math.abs(x1-x2) + Math.abs(y1-y2));
     }
 
 }
