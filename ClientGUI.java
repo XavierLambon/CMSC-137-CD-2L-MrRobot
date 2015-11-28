@@ -18,8 +18,8 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 	ArrayList<Building> bList;
 	Map map2;
-	JPanel map, cmControls;
-	JButton back, save;
+	JPanel map, cmControls, cmControls2;
+	JButton back, back2, save;
 	ArrayList<JRadioButton> bb;
 
 
@@ -180,6 +180,19 @@ public class ClientGUI extends JFrame implements ActionListener {
 		back.setPreferredSize(new Dimension(150,30));
 		back.addActionListener(this);
 		cmControls.add(back);
+
+
+		cmControls2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		cmControls2.setSize(200,600);
+		cmControls2.setPreferredSize(new Dimension(200,600));
+		cmControls2.setBounds(600,0,200,600);
+		back2 = new JButton("Main Menu");
+		back2.setSize(150,30);
+		back2.setPreferredSize(new Dimension(150,30));
+		back2.addActionListener(this);
+		cmControls2.add(back2);
+
+		cm2.add(cmControls2);
 		
 
 
@@ -190,7 +203,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 		ButtonGroup group = new ButtonGroup();
 
 		for(int i=0; i<bList.size(); i++){
-			JRadioButton button = new JRadioButton(bList.get(i).name+'-'+bList.get(i).quantity);
+			JRadioButton button = new JRadioButton(bList.get(i).getName()+'-'+bList.get(i).getQuantity());
 			bb.add(button);
 			cmControls.add(button);
 			group.add(button);
@@ -336,6 +349,11 @@ public class ClientGUI extends JFrame implements ActionListener {
     		cl.show(gp, "Main Menu");
 			return;
 		}
+		if(o == back2){
+			CardLayout cl = (CardLayout)(gp.getLayout());
+    		cl.show(gp, "Main Menu");
+			return;
+		}
 
 		for(int i=0; i<40; i++){
 			for(int j=0; j<40; j++){
@@ -457,14 +475,14 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 		Building tB = bList.get(0);
 		for(int b=0; b<bList.size(); b++){
-			if( bList.get(b).name.equals(tiles[i][j].value) ){
+			if( bList.get(b).getName().equals(tiles[i][j].value) ){
 				tB = bList.get(b);
 				break;
 			}
 		}
 
-		for(int c=0; c<tB.width; c++){
-			for(int r=0; r<tB.height; r++){
+		for(int c=0; c<tB.getWidth(); c++){
+			for(int r=0; r<tB.getHeight(); r++){
 
 				if( (i+c+j+r)%2 == 0 ) 
 					tiles[i+c][j+r].setBackground(new Color(102, 255, 51));
@@ -496,10 +514,6 @@ public class ClientGUI extends JFrame implements ActionListener {
 			return;
 		}
 
-
-
-
-
 		String temp = bb.get(index).getText();
 		String[] parts = temp.split("-");
 
@@ -509,7 +523,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 		Building tB = bList.get(0);
 		for(int b=0; b<bList.size(); b++){
-			if( bList.get(b).name.equals(parts[0]) ){
+			if( bList.get(b).getName().equals(parts[0]) ){
 				tB = bList.get(b);
 				//System.out.println("here");
 				break;
@@ -519,7 +533,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 		Image image = null;
 		BufferedImage buffered;
 		try{
-			image = ImageIO.read(new File("images/"+tB.name.replace(" ", "_")+".png"));
+			image = ImageIO.read(new File("images/"+tB.getName().replace(" ", "_")+".png"));
 		}
 		catch(IOException e){
 
@@ -527,8 +541,8 @@ public class ClientGUI extends JFrame implements ActionListener {
 		buffered = (BufferedImage) image;
 
 
-		for(int c=0; c<tB.width; c++){
-			for(int r=0; r<tB.height; r++){
+		for(int c=0; c<tB.getWidth(); c++){
+			for(int r=0; r<tB.getHeight(); r++){
 				if(i+c == 40 || j+r == 40){
 					JOptionPane.showMessageDialog(null, "Placing a building here would be out of bounds");
 					return;
@@ -541,19 +555,19 @@ public class ClientGUI extends JFrame implements ActionListener {
 			}	
 		}
 
-		double w = buffered.getWidth()/tB.width;
-		double h = buffered.getHeight()/tB.height;
+		double w = buffered.getWidth()/tB.getWidth();
+		double h = buffered.getHeight()/tB.getHeight();
 
 		//System.out.println("width:"+buffered.getWidth());
 		//System.out.println("height:"+buffered.getHeight());
 		//System.out.println("w:"+w+"  h:"+h);
 
-		for(int c=0; c<tB.width; c++){
-			for(int r=0; r<tB.height; r++){				
+		for(int c=0; c<tB.getWidth(); c++){
+			for(int r=0; r<tB.getHeight(); r++){				
 				tiles[i+c][j+r].setBackground(new Color(51, 204, 51));
 				tiles[i+c][j+r].setIcon(new ImageIcon(  resize( buffered.getSubimage((int)w*r,(int)h*c,(int)w,(int)h), tiles[i+c][j+r].getWidth(), tiles[i+c][j+r].getHeight() )  )   );
 					
-				String tValue = (c==0 && r==0)? tB.name: i+"-"+j;
+				String tValue = (c==0 && r==0)? tB.getName(): i+"-"+j;
 				//System.out.println(tValue);
 				
 				tiles[i+c][j+r].setValue(tValue);
@@ -630,304 +644,7 @@ class Tile extends JButton{
 	public String getValue(){
 		return value;
 	}	
-
 }
 
 
-class Building{
-	public String name;
-	public int width, height, hp, quantity;
 
-	public Building(String name, int width, int height, int hp, int quantity){
-		this.name = name;
-		this.width = width;
-		this.height = height;
-		this.hp = hp;
-		this.quantity = quantity;
-	}
-}
-
-class Coordinate{
-    private int x, y;
-    int g, h;
-    public Coordinate parent;
-
-
-    public Coordinate(int x, int y){
-        this.parent = null;
-        this.x = x;
-        this.y = y;
-    }
-
-    public int getX(){
-        return this.x;
-    }
-    public int getY(){
-        return this.y;
-    }
-    public int getG(){
-        return this.g;
-    }
-    public int getH(){
-        return this.h;
-    }
-    public int getF(){
-        return this.g + this.h;
-    }
-    public Coordinate getParent(){
-        return this.parent;
-    }
-
-
-    public boolean isIn(ArrayList<Coordinate> alc){
-        for (Coordinate c : alc) {
-            if(this.x == c.getX() && this.y == c.getY()){
-                return true;
-            }
-        }
-        return false;
-    }
-    public boolean isEqual(Coordinate c){
-        if(this.x == c.getX() && this.y == c.getY()){
-            return true;
-        }
-        return false;
-    }
-
-
-    public void setG(int g){
-        this.g = g;
-    }
-    public void setH(int h){
-        this.h = h;
-    }
-    public void setParent(Coordinate parent){
-        this.parent = parent;
-    }
-    public void setX(int x){
-        this.x = x;
-    }
-    public void setY(int y){
-        this.y = y;
-    }
-}
-
-class Unit {
-	private Coordinate pos;
-	private int range;
-	private javax.swing.Timer timer;
-	private ArrayList<Coordinate> path;
-	private int width = 7;
-    private int height = 7;
-    private Color color;
-
-	public Unit(Coordinate pos, int range, javax.swing.Timer timer, ArrayList<Coordinate> path){
-		this.pos = pos;
-		this.range = range;
-		this.timer = timer;
-		this.path = path;
-		this.timer.start(); 
-
-        Random rand = new Random();
-		float r = rand.nextFloat();
-		float gr = rand.nextFloat();
-		float b = rand.nextFloat();
-		this.color = new Color(r, gr, b);
-	}
-
-	public Coordinate getPos(){
-		return this.pos;
-	}
-	public int getWidth(){
-		return this.width;
-	}
-	public int getHeight(){
-		return this.height;
-	}
-	public int getRange(){
-		return this.range;
-	}
-	public javax.swing.Timer getTimer(){
-		return this.timer;
-	}
-	public ArrayList<Coordinate> getPath(){
-		return this.path;
-	}
-	public Color getColor(){
-		return this.color;
-	}
-	public void stopTimer(){
-		this.timer.stop();
-	}
-	public void move(){
-		this.pos = path.remove(0);
-	}
-}
-
-class Map extends JPanel implements ActionListener {
-	int tileCount = 40;
-    int dimension;
-    Coordinate goal; 
-    int range = 30;
-    ArrayList<Unit> unitArr;
-
-    public Map(int dimension) {
-    	this.dimension = dimension;
-    	goal = new Coordinate(dimension/2, dimension/2);
-    	unitArr = new ArrayList<Unit>();
-
-        setBorder(BorderFactory.createLineBorder(Color.black));
-
-        Map me = this;
-
-        addMouseListener(new MouseAdapter() {
-            public void mousePressed(MouseEvent e) {
-            	Unit tempUnit = new Unit(new Coordinate(e.getX(),e.getY()), 200, new javax.swing.Timer(3, me), aStarSearch(new Coordinate(e.getX(),e.getY()), goal));
-            	unitArr.add(tempUnit);
-            }
-        });
-    }
-
-    public void actionPerformed(ActionEvent e) {
-
-        for(Unit unit : unitArr){
-        	if(e.getSource() == unit.getTimer()){
-        		if(unit.getPath().size() > 0){
-        			int OFFSET = 1;
-		            repaint(unit.getPos().getX(),unit.getPos().getY(),unit.getWidth()+OFFSET,unit.getHeight()+OFFSET);
-		            unit.move();
-		            repaint(unit.getPos().getX(),unit.getPos().getY(),unit.getWidth()+OFFSET,unit.getHeight()+OFFSET);
-        		}
-        		else{
-        			unit.stopTimer();
-        		}
-        	}
-        }
-    }
-    
-
-    public Dimension getPreferredSize() {
-        return new Dimension(dimension,dimension);
-    }
-
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g); 
-
-        int td = (int) dimension/tileCount;
-        for(int i=0; i<tileCount; i++){
-        	for(int j=0; j<tileCount; j++){
-		        if( (i+j)%2 == 0 ) 
-					g.setColor(new Color(102, 255, 51));
-				else
-					g.setColor(new Color(51, 204, 51));
-				g.fillRect(i*td, j*td, td, td);     
-        	}
-        } 
-
-
-        //paints units
-		for(Unit unit : unitArr){
-			g.setColor(unit.getColor());
-        	g.fillRect(unit.getPos().getX(),unit.getPos().getY(),unit.getWidth(),unit.getHeight());
-		}
-
-		//paints the goal
-        g.setColor(Color.RED);
-        g.fillRect(goal.getX() - ((int)td/2),goal.getY()- ((int)td/2),td,td);
-        //g.fillRect(goal.getX(),goal.getY(),td,td);
-    }
-
-
-    public ArrayList<Coordinate> findNeighbors(Coordinate c){
-        ArrayList<Coordinate> neighbors = new ArrayList<Coordinate>();
-        for(int i=0; i<3; i++)
-            for(int j=0; j<3; j++){
-                int m = c.getX()-1+i;
-                int n = c.getY()-1+j;
-                if(m>=0 && m<dimension && n>=0 && n<dimension){
-                    neighbors.add(new Coordinate(m,n));
-                }
-            }
-        return neighbors;
-    }
-
-    public ArrayList<Coordinate> aStarSearch(Coordinate start, Coordinate goal){
-        ArrayList<Coordinate> openList = new ArrayList<Coordinate>();
-        ArrayList<Coordinate> closedList = new ArrayList<Coordinate>();
-        openList.add(start); 
-
-        start.setG(0);
-        start.setH(dist(start, goal));
-
-        while( !(openList.isEmpty()) ) { 
-            Coordinate currentC = openList.remove(0); 
-
-            ArrayList<Coordinate> neighbors = findNeighbors(currentC);
-
-            for(Coordinate neighbor : neighbors){
-
-                Coordinate newC = new Coordinate(neighbor.getX(),neighbor.getY());
-                newC.setParent(currentC);
-
-                if (dist(newC,goal) < range){
-                    System.out.println("Done searching");
-                    ArrayList<Coordinate> pathArr = new ArrayList<Coordinate>();
-			        do{
-			            pathArr.add(0, newC);
-			            newC = newC.parent;
-			        }while(newC != null);
-                    return pathArr;
-                }
-                
-                newC.setG(currentC.getG() + dist(newC, currentC));
-                newC.setH(dist(newC, goal));
-
-                int flag = 1;
-                if(newC.isIn(closedList))
-                    continue;
-
-                if (!newC.isIn(openList)){
-                    enqueue(newC, openList);
-                }
-                else {
-                    for (Coordinate c : openList) {
-                        if(newC.getX() == c.getX() && newC.getY() == c.getY()){
-                            // This is not a better path.
-                            if(newC.getF() >= c.getF()){
-                                flag = 0;        
-                            }
-                            break;
-                        }
-                    }
-                } 
-                if(flag == 1){
-                    enqueue(newC, openList);
-                }
-            }
-
-            closedList.add(currentC); 
-
-        }
-        return null;
-    } 
-
-    public void enqueue(Coordinate c, ArrayList<Coordinate> alc){
-        for(int i=0; i<alc.size(); i++){
-            if(alc.get(i).getF() >= c.getF()){
-                alc.add(i, c);
-                return;
-            }
-        }
-        alc.add(c);
-    } 
-
-
-    public int dist(Coordinate p1, Coordinate p2){
-        int x1 = p1.getX();
-        int x2 = p2.getX();
-        int y1 = p1.getY();
-        int y2 = p2.getY();
-        return (int) Math.round(Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)));
-    }
-
-}
