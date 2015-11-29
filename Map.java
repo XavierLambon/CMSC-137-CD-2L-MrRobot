@@ -22,22 +22,28 @@ class Map extends JPanel implements ActionListener {
         
         this.dimension = dimension;
         
-        buildingArr = new ArrayList<Building>();
-        buildingArr.add(new Building("B1", new Coordinate((int)dimension/2, (int)dimension/4), (int)dimension/tileCount, (int)dimension/tileCount, 200, 2));
-        buildingArr.add(new Building("B2", new Coordinate((int)dimension/2, (int)dimension/4*3), (int)dimension/tileCount, (int)dimension/tileCount, 200, 2));
-        buildingArr.add(new Building("B3", new Coordinate((int)dimension/4, (int)dimension/2), (int)dimension/tileCount, (int)dimension/tileCount, 200, 2));
-        buildingArr.add(new Building("B4", new Coordinate((int)dimension/4*3, (int)dimension/2), (int)dimension/tileCount, (int)dimension/tileCount, 200, 2));
+        /*
+        buildingArr.add(new Building("Gold Mine", new Coordinate(10,10), 3, 3, 960, 7));
+        buildingArr.add(new Building("Gold Mine", new Coordinate(10,20), 3, 3, 960, 7));
+        buildingArr.add(new Building("Gold Mine", new Coordinate(10,30), 3, 3, 960, 7));
+        buildingArr.add(new Building("Gold Mine", new Coordinate(20,10), 3, 3, 960, 7));
+        buildingArr.add(new Building("Gold Mine", new Coordinate(20,20), 3, 3, 960, 7));
+        buildingArr.add(new Building("Gold Mine", new Coordinate(20,30), 3, 3, 960, 7));
+        buildingArr.add(new Building("Gold Mine", new Coordinate(30,10), 3, 3, 960, 7));
+        buildingArr.add(new Building("Gold Mine", new Coordinate(30,20), 3, 3, 960, 7));
+        buildingArr.add(new Building("Gold Mine", new Coordinate(30,30), 3, 3, 960, 7));
+        */
 
+        buildingArr = new ArrayList<Building>();
         unitArr = new ArrayList<Unit>();
 
         addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
             	Coordinate pos = new Coordinate(e.getX(),e.getY());
-                int timerSpeed = 5;
-                int range = 10;
-            	Unit unit = new Unit(pos, range, new javax.swing.Timer(timerSpeed, me));
-                //System.out.println(findNearestBuilding(unit).getWidth());
-                //System.out.println(unit.getWidth());
+                int ms = 5;
+                int as = 20;
+                int range = 0;
+            	Unit unit = new Unit(pos, range, new javax.swing.Timer(ms, me), as, ms);
                 unit.setTarget(findNearestBuilding(unit));
             	unit.setPath(aStarSearch(unit, unit.getTarget()));
                 unit.startTimer();
@@ -57,18 +63,33 @@ class Map extends JPanel implements ActionListener {
         			repaint();
         		}
         		else{
-        			unit.stopTimer();
-                    buildingArr.remove(unit.getTarget());
-                    //repaint();
-                    unit.setTarget(findNearestBuilding(unit));
-                    if(unit.getTarget() != null){
-                        unit.setPath(aStarSearch(unit, unit.getTarget()));
-                        unit.startTimer();
+                    if(!unit.isAttacking()){
+                        unit.attack();
                     }
+                    
+                    unit.getTarget().addDamage(1);
                     repaint();
+
+                    if(unit.getTarget().getHp() <= 0){
+                        unit.stopTimer();
+                        buildingArr.remove(unit.getTarget());
+                        unit.setTarget(findNearestBuilding(unit));
+                        if(unit.getTarget() != null){
+                            unit.setPath(aStarSearch(unit, unit.getTarget()));
+                            unit.startTimer();
+                        }
+                        repaint();
+                    }
+
         		}
         	}
         }
+    }
+
+    public void setBuildings(ArrayList<Building> bArr){
+        buildingArr = bArr;
+        unitArr = new ArrayList<Unit>();
+        repaint();
     }
     
 
@@ -92,18 +113,40 @@ class Map extends JPanel implements ActionListener {
         	}
         } 
         
-
-        //paints buildings
-		for(Building building : buildingArr){
-			g.setColor(Color.BLUE);
-        	g.fillRect(building.getPos().getX()-((int)building.getWidth()/2),building.getPos().getY()-((int)building.getHeight()/2),building.getWidth(),building.getHeight());
-		}
-
         //paints units
 		for(Unit unit : unitArr){
 			g.setColor(unit.getColor());
         	g.fillRect(unit.getPos().getX()-((int)unit.getWidth()/2),unit.getPos().getY()-((int)unit.getHeight()/2),unit.getWidth(),unit.getHeight());
 		}
+
+        //paints buildings
+        for(Building building : buildingArr){
+
+            Image image = null;
+            BufferedImage buffered;
+            try{
+                image = ImageIO.read(new File("images/"+building.getName().replace(" ", "_")+".png"));
+            }
+            catch(IOException e){
+
+            }
+            buffered = (BufferedImage) image;
+
+
+
+            float hpPercent = (float)building.getHp()/building.getFull();
+            int green = (int)(255*hpPercent);
+            int red = 255-green;
+
+            g.setColor(Color.BLACK);
+            g.drawRect(building.getPos().getX(),building.getPos().getY()-10,building.getWidth(),5);
+            g.setColor(new Color(red, green, 0));
+            g.fillRect(building.getPos().getX(),building.getPos().getY()-10,(int)(building.getWidth()*hpPercent),5);
+            
+            g.setColor(Color.BLUE);
+            g.drawImage(image, building.getPos().getX(),building.getPos().getY(),building.getWidth(),building.getHeight(), Color.GREEN, null);
+        }
+
     }
 
 
@@ -120,6 +163,8 @@ class Map extends JPanel implements ActionListener {
         return neighbors;
     }
 
+
+    //assumes building is square
     public boolean isInRange(Coordinate u, Coordinate g, int r){
     	Coordinate u1 = new Coordinate(u.getX()-u.getDim(), u.getY()-u.getDim());
     	Coordinate g1 = new Coordinate(g.getX()-g.getDim(), g.getY()-g.getDim());
@@ -150,9 +195,13 @@ class Map extends JPanel implements ActionListener {
         ArrayList<Coordinate> closedList = new ArrayList<Coordinate>();
 
 
-        Coordinate start = new Coordinate(unit.getPos().getX(), unit.getPos().getY(), unit.getWidth());
-        Coordinate goal = new Coordinate(building.getPos().getX(), building.getPos().getY(), building.getWidth());
+        Coordinate start = new Coordinate(unit.getPos().getX(), unit.getPos().getY(), (int)(unit.getWidth()/2));
+        int adjX = building.getPos().getX() + (int)(building.getWidth()/2);
+        int adjY = building.getPos().getY() + (int)(building.getHeight()/2);
+
+        Coordinate goal = new Coordinate(adjX, adjY, (int)(building.getWidth()/2));
         int range = unit.getRange();
+
 
         openList.add(start); 
 

@@ -9,18 +9,22 @@ import java.io.*;
 
 class Unit {
 	private Coordinate pos;
-	private int range;
+	private int range, ms, as;
 	private javax.swing.Timer timer;
 	private ArrayList<Coordinate> path;
 	private int width = 7;
     private int height = 7;
     private Color color;
     private Building target;
+    private boolean attacking;
 
-	public Unit(Coordinate pos, int range, javax.swing.Timer timer){
+	public Unit(Coordinate pos, int range, javax.swing.Timer timer, int as, int ms){
 		this.pos = pos;
 		this.range = range;
 		this.timer = timer;
+		this.as = as;
+		this.ms = ms;
+		attacking = false;
 
 		/*
         Random rand = new Random();
@@ -29,7 +33,25 @@ class Unit {
 		float b = rand.nextFloat();
 		this.color = new Color(r, gr, b);
 		*/
-		this.color = Color.RED;
+		if(range == 0){
+			this.color = Color.RED;
+		}
+
+		else{
+			this.color = Color.BLUE;
+
+		}
+	}
+
+	public boolean isAttacking(){
+		return attacking;
+	}
+
+	public void attack(){
+		this.timer.stop();
+		this.timer.setDelay(as);
+		this.timer.start();
+		attacking = true;
 	}
 
 	public Coordinate getPos(){
@@ -63,6 +85,12 @@ class Unit {
 		this.timer.start();
 	}
 	public void move(){
+		if(attacking){
+			attacking = false;
+			this.timer.stop();
+			this.timer.setDelay(ms);
+			this.timer.start();
+		}
 		this.pos = path.remove(0);
 	}
 	public void setPath(ArrayList<Coordinate> path){

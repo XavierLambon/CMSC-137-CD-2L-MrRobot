@@ -1,1 +1,1 @@
-C:\Users\Czar John\Projects\137\coc\database\database.sqlite
+D:\projects\137\coc\database\database.sqlite

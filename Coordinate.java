@@ -13,6 +13,8 @@ class Coordinate{
     int g, h;
     public Coordinate parent;
 
+
+
     public Coordinate(int x, int y){
         this.parent = null;
         this.x = x;
@@ -23,6 +25,10 @@ class Coordinate{
         this.x = x;
         this.y = y;
         this.dim = dim;
+    }
+
+    public void print(){
+        System.out.println(" "+x+", "+y+"  -  "+dim);
     }
 
     public int getDim(){

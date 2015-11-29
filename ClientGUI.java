@@ -339,6 +339,17 @@ public class ClientGUI extends JFrame implements ActionListener {
 		}
 
 		if(o == tMove){
+			ArrayList<Building> bArr = new ArrayList<Building>();
+			for(int i=0; i<40; i++){
+				for(int j=0; j<40; j++){
+					if(tiles[i][j].getValue().equals("") || tiles[i][j].getValue().contains("-")){
+						continue;
+					}
+					//weird part here
+					bArr.add(new Building(tiles[i][j].getValue(), new Coordinate(j, i)));
+				}
+			}
+			map2.setBuildings(bArr);
 			CardLayout cl = (CardLayout)(gp.getLayout());
     		cl.show(gp, "Troop Movement");
 			return;
@@ -481,8 +492,8 @@ public class ClientGUI extends JFrame implements ActionListener {
 			}
 		}
 
-		for(int c=0; c<tB.getWidth(); c++){
-			for(int r=0; r<tB.getHeight(); r++){
+		for(int c=0; c<tB.getQWidth(); c++){
+			for(int r=0; r<tB.getQHeight(); r++){
 
 				if( (i+c+j+r)%2 == 0 ) 
 					tiles[i+c][j+r].setBackground(new Color(102, 255, 51));
@@ -534,15 +545,16 @@ public class ClientGUI extends JFrame implements ActionListener {
 		BufferedImage buffered;
 		try{
 			image = ImageIO.read(new File("images/"+tB.getName().replace(" ", "_")+".png"));
+			System.out.println("Loaded image");
 		}
 		catch(IOException e){
-
+			System.out.println("Failed to load image");
 		}
 		buffered = (BufferedImage) image;
 
 
-		for(int c=0; c<tB.getWidth(); c++){
-			for(int r=0; r<tB.getHeight(); r++){
+		for(int c=0; c<tB.getQWidth(); c++){
+			for(int r=0; r<tB.getQHeight(); r++){
 				if(i+c == 40 || j+r == 40){
 					JOptionPane.showMessageDialog(null, "Placing a building here would be out of bounds");
 					return;
@@ -555,21 +567,16 @@ public class ClientGUI extends JFrame implements ActionListener {
 			}	
 		}
 
-		double w = buffered.getWidth()/tB.getWidth();
-		double h = buffered.getHeight()/tB.getHeight();
+		double w = buffered.getWidth()/tB.getQWidth();
+		double h = buffered.getHeight()/tB.getQHeight();
 
-		//System.out.println("width:"+buffered.getWidth());
-		//System.out.println("height:"+buffered.getHeight());
-		//System.out.println("w:"+w+"  h:"+h);
-
-		for(int c=0; c<tB.getWidth(); c++){
-			for(int r=0; r<tB.getHeight(); r++){				
+		for(int c=0; c<tB.getQWidth(); c++){
+			for(int r=0; r<tB.getQHeight(); r++){				
 				tiles[i+c][j+r].setBackground(new Color(51, 204, 51));
 				tiles[i+c][j+r].setIcon(new ImageIcon(  resize( buffered.getSubimage((int)w*r,(int)h*c,(int)w,(int)h), tiles[i+c][j+r].getWidth(), tiles[i+c][j+r].getHeight() )  )   );
 					
 				String tValue = (c==0 && r==0)? tB.getName(): i+"-"+j;
 				//System.out.println(tValue);
-				
 				tiles[i+c][j+r].setValue(tValue);
 			}	
 		}
