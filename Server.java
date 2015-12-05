@@ -28,15 +28,15 @@ public class Server {
 	private boolean keepGoing;
 
 	//for the database path (dynamic)
-	private String path;
+	private static String path;
 	
 	private static DatagramSocket serverUDP;
-	//private DatagramPacket sendPacket, receivePacket;
+	//private static DatagramPacket sendPacket, receivePacket;
 	
 
 	//for the SQLite
-	private Connection c = null;
-	private Statement stmt = null;
+	private static Connection c = null;
+	private static Statement stmt = null;
 	private String sql = null;
 
 	/*
@@ -237,9 +237,67 @@ public class Server {
 					DatagramPacket sendPacket, receivePacket;
 					receivePacket = new DatagramPacket(receiveData, receiveData.length);
 					serverUDP.receive(receivePacket);
-					String msgFromClient = new String(receivePacket.getData());	//i may need to trim the excess null chars at the end
-					System.out.println("Message from a client: "+msgFromClient);
 
+					String msgFromClient = new String(receivePacket.getData()).trim();	//i may need to trim the excess null chars at the end
+					String udpString[];
+					udpString = msgFromClient.split("~");
+
+					//handles the UDP request from the client
+					System.out.println(msgFromClient);
+					String uname = udpString[1];
+					if(udpString[0].equals("mapdata")){
+						String parameter;
+						if(udpString[2].equals("none")){
+							parameter = "";
+						}else{
+							parameter = udpString[2];
+						}
+						try{
+							Class.forName("org.sqlite.JDBC");
+							c = DriverManager.getConnection("jdbc:sqlite:"+path);	//jdbc:sqlite:absoluteDBpath
+							c.setAutoCommit(true);
+
+							stmt = c.createStatement();
+							String statement = "UPDATE ACCOUNT SET base_config = '"+parameter+"' WHERE name = '"+uname+"'";
+							stmt.executeUpdate(statement);
+							
+						}catch(Exception e){
+							System.err.println(e.getClass().getName() + ": " + e.getMessage());
+							System.exit(0);
+						}
+					}else if(udpString[0].equals("getBase")){	//handles the fetching of the user's base config to the client
+						
+						try{
+							Class.forName("org.sqlite.JDBC");
+							c = DriverManager.getConnection("jdbc:sqlite:"+path);	//jdbc:sqlite:absoluteDBpath
+							c.setAutoCommit(true);
+
+							stmt = c.createStatement();
+							ResultSet rs = stmt.executeQuery("SELECT * FROM ACCOUNT WHERE name = '"+uname+"';");
+
+							String baseConfig = "";
+							while(rs.next()){
+								baseConfig = rs.getString("base_config");
+							}
+							//send here
+							System.out.println("USER'S CONFIG: "+baseConfig);
+							Arrays.fill(sendData, (byte)0);
+							sendData = baseConfig.getBytes();
+							InetAddress IPAddress = receivePacket.getAddress();	//for sending the 
+							int port2 = receivePacket.getPort();
+							sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port2);
+							try{
+								serverUDP.send(sendPacket);
+							}catch(Exception ec) {
+								System.out.println("Error creating a UDP packet:" + ec);
+							}
+							
+						}catch(Exception e){
+							System.err.println(e.getClass().getName() + ": " + e.getMessage());
+							System.exit(0);
+						}
+					}
+					
 					System.out.println("Client IP: "+receivePacket.getAddress());
 					System.out.println("Client Port: "+receivePacket.getPort());
 					System.out.println("Client socketAddress: "+receivePacket.getSocketAddress());
@@ -326,7 +384,6 @@ public class Server {
 							//do some stuffs here
 							System.out.println("Logged in successful. Welcome "+name+"!");
 							display("Logged in successful. Welcome "+name+"!");
-							System.out.println("Username: "+username+" Password: "+password);
 							Object input[] = new Object[2];
 							input[0] = 3;
 							input[1] = new String("");

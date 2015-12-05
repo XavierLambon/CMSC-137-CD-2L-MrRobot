@@ -45,6 +45,8 @@ public class ClientGUI extends JFrame implements ActionListener {
 	private JTextField usernameField;
 	private JTextField passwordField;
 
+	private String unameUDP;
+
 	// Constructor connection receiving a socket number
 	ClientGUI(String host, int port, int udpPort) {
 
@@ -202,16 +204,17 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 		ButtonGroup group = new ButtonGroup();
 
+		JRadioButton button1 = new JRadioButton("Remove Building");
+		bb.add(button1);
+		cmControls.add(button1);
+		group.add(button1);
+
 		for(int i=0; i<bList.size(); i++){
 			JRadioButton button = new JRadioButton(bList.get(i).getName()+'-'+bList.get(i).getQuantity());
 			bb.add(button);
 			cmControls.add(button);
 			group.add(button);
 		}
-		JRadioButton button = new JRadioButton("Remove Building");
-		bb.add(button);
-		cmControls.add(button);
-		group.add(button);
 
 		JScrollPane jsp2 = new JScrollPane(cmControls);
 		jsp2.setSize(200,600);
@@ -342,6 +345,9 @@ public class ClientGUI extends JFrame implements ActionListener {
 		}
 
 		if(o == customMap){
+			String baseConfig = getBaseConfig();
+			System.out.println("base config: "+baseConfig);
+
 			CardLayout cl = (CardLayout)(gp.getLayout());
     		cl.show(gp, "Map Customization");
 			return;
@@ -365,6 +371,39 @@ public class ClientGUI extends JFrame implements ActionListener {
 		}
 
 		if(o == back){
+			ArrayList<Building> bArr = new ArrayList<Building>();
+			for(int i=0; i<40; i++){
+				for(int j=0; j<40; j++){
+					if(tiles[i][j].getValue().equals("") || tiles[i][j].getValue().contains("-")){
+						continue;
+					}
+					//weird part here
+					bArr.add(new Building(tiles[i][j].getValue(), new Coordinate(j, i)));
+				}
+			}
+
+
+			String temp = "mapdata~"+unameUDP+"~";
+			int tileCount = 40;
+			int dim = 600;
+			int tileDim = (int)(dim/tileCount);
+			int counter = 0;
+			for(Building b : bArr){
+				int x, y, hp;
+				x = b.getPos().getX()/tileDim;
+				y = b.getPos().getY()/tileDim;
+				hp = b.getHp();
+				temp += b.getName()+"-"+x+","+y+"-"+hp+"|";
+				counter += 1;
+			}
+			if(counter > 0){
+				temp = temp.substring(0, temp.length()-1);	//removes the last '|'
+			}else{
+				temp += "none";
+			}
+			
+			client.sendUDP(temp);	//allows saving of the current state of the map into the user's account
+
 			CardLayout cl = (CardLayout)(gp.getLayout());
     		cl.show(gp, "Main Menu");
 
@@ -380,9 +419,6 @@ public class ClientGUI extends JFrame implements ActionListener {
 		for(int i=0; i<40; i++){
 			for(int j=0; j<40; j++){
 				if(o == tiles[i][j]){
-					String clientInput = "coordinate: "+i+", "+j;
-					client.sendUDP(clientInput);	//can add a 'type' parameter for future use. i'll handle that~
-					System.out.println(clientInput);	//currently HERE
 					
 					for(int k=0; k<bb.size(); k++){
 						if(bb.get(k).isSelected()){
@@ -441,10 +477,19 @@ public class ClientGUI extends JFrame implements ActionListener {
 			// test if we can start the Client
 			if(!client.start()) 
 				return;
+
+			unameUDP = username;
+
+			//fetching of the base_config string from the database
+
 			tf.setText("");
 			ta.setText("");
 		}
+	}
 
+	public String getBaseConfig(){
+		client.sendUDP("getBase~"+unameUDP);
+		return client.receiveUDP();
 	}
 
 	public boolean getConnectStatus(){

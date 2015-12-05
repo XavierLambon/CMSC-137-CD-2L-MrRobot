@@ -71,11 +71,27 @@ public class Client  {
 		sendData = message.getBytes();
 		sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 1600);
 		try{
-			System.out.println("yay");
 			clientSocket.send(sendPacket);
 		}catch(Exception ec) {
 			display("Error creating a UDP packet:" + ec);
 		}
+	}
+
+	public String receiveUDP(){
+		//System.out.println("client port: "+clientSocket.getLocalPort());
+		Arrays.fill(receiveData, (byte)0);
+		receivePacket = new DatagramPacket(receiveData, receiveData.length);
+		String config = "";
+		try{
+			clientSocket.send(sendPacket);
+			clientSocket.receive(receivePacket);
+			config = new String(receivePacket.getData()).trim();
+			
+		}catch(Exception ec) {
+			display("Error creating a UDP packet:" + ec);
+		}
+		return config;
+		
 	}
 	
 	public boolean start() {
@@ -260,7 +276,7 @@ public class Client  {
 	 * if we have a GUI or simply System.out.println() it in console mode
 	 */
 	class ListenFromServer extends Thread {
-
+		boolean isUDP = false;
 		public void run() {
 			while(true) {
 
@@ -272,7 +288,11 @@ public class Client  {
 					}
 					if(validated){
 						//calls the createUDP FUNCTION
-						createUDP();
+						if(!isUDP){
+							createUDP();
+							isUDP = true;
+						}
+						
 					
 						// if console mode print the message and add back the prompt
 						if(!cg.getConnectStatus()){
