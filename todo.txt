@@ -1,9 +1,11 @@
+
 rework add building
+defense buildings
+unit damages
+
+
 
 building priority
 
-unit damages
-
-defense buildings
 
 unit sprites

@@ -21,18 +21,6 @@ class Map extends JPanel implements ActionListener {
         setBorder(BorderFactory.createLineBorder(Color.black));
         
         this.dimension = dimension;
-        
-        /*
-        buildingArr.add(new Building("Gold Mine", new Coordinate(10,10), 3, 3, 960, 7));
-        buildingArr.add(new Building("Gold Mine", new Coordinate(10,20), 3, 3, 960, 7));
-        buildingArr.add(new Building("Gold Mine", new Coordinate(10,30), 3, 3, 960, 7));
-        buildingArr.add(new Building("Gold Mine", new Coordinate(20,10), 3, 3, 960, 7));
-        buildingArr.add(new Building("Gold Mine", new Coordinate(20,20), 3, 3, 960, 7));
-        buildingArr.add(new Building("Gold Mine", new Coordinate(20,30), 3, 3, 960, 7));
-        buildingArr.add(new Building("Gold Mine", new Coordinate(30,10), 3, 3, 960, 7));
-        buildingArr.add(new Building("Gold Mine", new Coordinate(30,20), 3, 3, 960, 7));
-        buildingArr.add(new Building("Gold Mine", new Coordinate(30,30), 3, 3, 960, 7));
-        */
 
         buildingArr = new ArrayList<Building>();
         unitArr = new ArrayList<Unit>();
@@ -42,8 +30,9 @@ class Map extends JPanel implements ActionListener {
             	Coordinate pos = new Coordinate(e.getX(),e.getY());
                 int ms = 5;
                 int as = 20;
-                int range = 0;
-            	Unit unit = new Unit(pos, range, new javax.swing.Timer(ms, me), as, ms);
+                int range = 1;
+                Unit unit = new Unit("Barbarian", pos, new javax.swing.Timer(ms, me));
+            	//Unit unit = new Unit(pos, range, new javax.swing.Timer(ms, me), as, ms);
                 unit.setTarget(findNearestBuilding(unit));
             	unit.setPath(aStarSearch(unit, unit.getTarget()));
                 unit.startTimer();
@@ -53,13 +42,34 @@ class Map extends JPanel implements ActionListener {
         });
     }
 
+    public boolean isInRange(Unit u, Building b){
+        if(dist(u.getPos(), b.getCenter()) <= b.getRange()){
+            return true;
+        }
+        return false;
+    }
+
     public void actionPerformed(ActionEvent e) {
 
         for(Unit unit : unitArr){
-        	if(e.getSource() == unit.getTimer()){
-        		if(unit.getPath().size() > 0){
-        			repaint();
-		            unit.move();
+            if(unit.getHp() <= 0){
+                unit.stopTimer();
+                unitArr.remove(unit);
+                unit = null;
+            }
+
+            /*
+            for(Building building : buildingArr){
+                if(building.isDefense() && !building.isAttacking() && isInRange(unit, building)){
+                    building.attack(unit);
+                }
+            }
+            */
+            
+            if(e.getSource() == unit.getTimer()){
+                if(unit.getPath().size() > 0){
+                    repaint();
+                    unit.move();
         			repaint();
         		}
         		else{
@@ -67,7 +77,7 @@ class Map extends JPanel implements ActionListener {
                         unit.attack();
                     }
                     
-                    unit.getTarget().addDamage(1);
+                    unit.getTarget().addDamage(unit.getDamage());
                     repaint();
 
                     if(unit.getTarget().getHp() <= 0){
@@ -117,7 +127,17 @@ class Map extends JPanel implements ActionListener {
 		for(Unit unit : unitArr){
 			g.setColor(unit.getColor());
         	g.fillRect(unit.getPos().getX()-((int)unit.getWidth()/2),unit.getPos().getY()-((int)unit.getHeight()/2),unit.getWidth(),unit.getHeight());
-		}
+		
+            float hpPercent = (float)(unit.getHp()/unit.getFull());
+            int green = (int)(255*hpPercent);
+            int red = 255-green;
+
+            g.setColor(Color.BLACK);
+            g.drawRect(unit.getPos().getX(),unit.getPos().getY()-5,unit.getWidth(),3);
+            g.setColor(new Color(red%255, green%255, 0));
+            g.fillRect(unit.getPos().getX(),unit.getPos().getY()-5,(int)(unit.getWidth()*hpPercent),3);
+           
+        }
 
         //paints buildings
         for(Building building : buildingArr){

@@ -9,7 +9,8 @@ import java.io.*;
 
 class Unit {
 	private Coordinate pos;
-	private int range, ms, as;
+	private String name;
+	private int range, ms, as, dmg;
 	private javax.swing.Timer timer;
 	private ArrayList<Coordinate> path;
 	private int width = 7;
@@ -17,6 +18,11 @@ class Unit {
     private Color color;
     private Building target;
     private boolean attacking;
+    private int full, hp = 200;
+
+	int tileCount = 40;
+	int dimension = 600;
+	int tileDim = (int)dimension/tileCount;
 
 	public Unit(Coordinate pos, int range, javax.swing.Timer timer, int as, int ms){
 		this.pos = pos;
@@ -33,7 +39,7 @@ class Unit {
 		float b = rand.nextFloat();
 		this.color = new Color(r, gr, b);
 		*/
-		if(range == 0){
+		if(range == 1){
 			this.color = Color.RED;
 		}
 
@@ -41,6 +47,54 @@ class Unit {
 			this.color = Color.BLUE;
 
 		}
+	}
+
+	public Unit(String name, Coordinate pos, javax.swing.Timer timer){
+		int width = 7, height = 7;
+		int hp = 1, full = 1, ms = 1, as, dmg, range;
+
+		this.name = name;
+		this.pos = pos;
+		this.timer = timer;
+
+		if(name.equals("Barbarian")){
+			this.hp = 125;
+			this.ms = 16*tileDim;
+			this.as = 1000;
+			this.dmg = 30;
+			this.range = 1;
+			this.color = new Color(255, 0, 0);
+		}
+		else if(name.equals("Archer")){
+			this.hp = 48;
+			this.ms = 24*tileDim;
+			this.as = 1000;
+			this.dmg = 25;
+			this.range = 4*tileDim;
+			this.color = new Color(0, 0, 255);
+		}
+
+		this.full = hp;
+		timer.setDelay(ms);
+		
+	}
+
+	public void setHp(int hp){
+		this.hp = hp;
+	}
+
+	public int getHp(){
+		return this.hp;
+	
+	}
+
+	public int getFull(){
+		return this.full;
+	}
+
+
+	public int getDamage(){
+		return this.dmg;
 	}
 
 	public boolean isAttacking(){

@@ -310,6 +310,15 @@ public class ClientGUI extends JFrame implements ActionListener {
 		bList.add(new Building("Town Hall", 4, 4, 5500, 1));
 		bList.add(new Building("Clan Castle", 3, 3, 3400, 1));
 
+		//defense
+		bList.add(new Building("Archer Tower", 3, 3, 1050, 7));
+		bList.add(new Building("Cannon", 3, 3, 1260, 6));
+		//bList.add(new Building("Air Sweeper", 2, 2, 1000, 2));
+		//bList.add(new Building("Cannon", 3, 3, 1260, 6));
+		//bList.add(new Building("Cannon", 3, 3, 1260, 6));
+		
+
+
 	}
 		
 	/*
@@ -358,6 +367,8 @@ public class ClientGUI extends JFrame implements ActionListener {
 		if(o == back){
 			CardLayout cl = (CardLayout)(gp.getLayout());
     		cl.show(gp, "Main Menu");
+
+
 			return;
 		}
 		if(o == back2){
