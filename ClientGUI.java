@@ -12,241 +12,196 @@ import java.io.*;
  * The Client with its GUI
  */
 public class ClientGUI extends JFrame implements ActionListener {
+	
+	int mapSize = 40;
 
-	JPanel gp;
 	Tile[][] tiles;
-
 	ArrayList<Building> bList;
-	Map map2;
-	JPanel map, cmControls, cmControls2;
-	JButton back, back2, save;
 	ArrayList<JRadioButton> bb;
 
+	private JLabel chatStatus;
+	private JTextField chatField;
+	private JTextArea chatArea;
 
-	private static final long serialVersionUID = 1L;
-	// will first hold "Username:", later on "Enter message"
-	private JLabel label;
-	// to hold the Username and later on the messages
-	private JTextField tf;
-	// to hold the server address an the port number
-	private JTextField tfServer, tfPort;
-	// to Logout and get the list of the users
-	private JButton login, logout, whoIsIn, customMap, tMove;
-	// for the chat room
-	private JTextArea ta;
-	// if it is for connection
-	private boolean connected;
-	// the Client object
-	private Client client;
-	// the default port number
-	private int defaultPort, defaultUDPPort;
-	private String defaultHost;
+	MainPanel mainPanels, mainLogin, mainMenu, mainCM, mainTM;
+	SidePanel sidePanels, sideLogin, sideMenu, sideCM, sideTM;
 
 	private JTextField usernameField;
 	private JTextField passwordField;
 
+	CButton cmButton, tmButton;
+	CButton cmBack;
+	CButton tmBack;
+
+	Map mapTM;
+
+	private static final long serialVersionUID = 1L;
+	private JTextField tfServer, tfPort;
+	private CButton login, logout, whoIsIn;
+	private boolean connected;
+	private Client client;
+	private int defaultPort, defaultUDPPort;
+	private String defaultHost;
+
+
 	private String unameUDP;
 
 	// Constructor connection receiving a socket number
-	ClientGUI(String host, int port, int udpPort) {
+	public ClientGUI(String host, int port, int udpPort) {
 
 		super("Clash of Clans");
 		defaultPort = port;
 		defaultUDPPort = udpPort;
 		defaultHost = host;
-		
+
 		// the server name and the port number
-		
 		JPanel serverAndPort = new JPanel(new GridLayout(1,5, 1, 3));
 		tfServer = new JTextField(host);
 		tfPort = new JTextField("" + port);
 		tfPort.setHorizontalAlignment(SwingConstants.RIGHT);
 
-		serverAndPort.add(new JLabel("Server Address:  "));
-		serverAndPort.add(tfServer);
-		serverAndPort.add(new JLabel("Port Number:  "));
-		serverAndPort.add(tfPort);
-		serverAndPort.add(new JLabel(""));
-		
+		// CHAT COMPONENTS
+		chatStatus = new JLabel("Please login first", SwingConstants.LEFT);
+		chatField = new JTextField(18);
+		chatField.setBackground(Color.WHITE);
 
+		JPanel chatControls = new JPanel();
+		chatControls.add(chatStatus);
+		chatControls.add(chatField);
+		chatControls.setBounds(0,0,200,50);
 
-		JPanel northPanel = new JPanel();
-
-		label = new JLabel("Please login first", SwingConstants.CENTER);
-		tf = new JTextField(18);
-		tf.setBackground(Color.WHITE);
-		
-		northPanel.add(label);
-		northPanel.add(tf);
-		northPanel.setBounds(0,0,200,50);
-
-
-		JPanel centerPanel = new JPanel(null);
-
-		ta = new JTextArea("Welcome to the Chat room\n", 80, 80);
-		JScrollPane jsp = new JScrollPane(ta);
+		chatArea = new JTextArea("Welcome to the Chat room\n", 80, 80);
+		chatArea.setEditable(false);
+		JScrollPane jsp = new JScrollPane(chatArea);
 		jsp.setBounds(0,50,200,550);
 		
-		centerPanel.setSize(1000,600);
-		centerPanel.add(northPanel);
-		centerPanel.add(jsp);
-		
+		JPanel chatPanel = new JPanel(null);
+		chatPanel.setSize(1000,600);
+		chatPanel.add(chatControls);
+		chatPanel.add(jsp);
 
 
-		usernameField = new JTextField("user", 20);
-		passwordField = new JTextField("password", 20);
-		// the 3 buttons
-		login = new JButton("Login");
+		//LOGIN COMPONENTS
+		mainLogin = new MainPanel();
+		mainLogin.add(new JLabel("Main Login"));
+
+		usernameField = new JTextField("user", 15);
+		passwordField = new JTextField("password", 15);
+		login = new CButton("Login");
 		login.addActionListener(this);
-		logout = new JButton("Logout");
+
+
+		sideLogin = new SidePanel();
+		sideLogin.add(usernameField);
+		sideLogin.add(passwordField);
+		sideLogin.add(login);
+		
+
+		
+		//MAIN MENU COMPONENTS 
+		mainMenu = new MainPanel();
+		mainMenu.add(new JLabel("Main Menu"));
+
+		sideMenu = new SidePanel();
+		cmButton = new CButton("Customize Map");
+		tmButton = new CButton("Troop Movement");
+		logout = new CButton("Logout");
+		cmButton.addActionListener(this);
+		tmButton.addActionListener(this);
 		logout.addActionListener(this);
-		logout.setEnabled(false);		// you have to login before being able to logout
-		
-		//game panel
-		gp = new JPanel(new CardLayout());
-		gp.setBounds(200,0,800,600);
-
-		JPanel loginp = new JPanel();
-		loginp.add(usernameField);
-		loginp.add(passwordField);
-		loginp.add(login);
-
-		JPanel mainmenu = new JPanel();
-
-		customMap = new JButton("Customize Map");
-		tMove = new JButton("Troop Movement");
-		customMap.addActionListener(this);
-		tMove.addActionListener(this);
-		mainmenu.add(customMap);
-		mainmenu.add(tMove);
-		mainmenu.add(logout);
-
-	
+		sideMenu.add(cmButton);
+		sideMenu.add(tmButton);
+		sideMenu.add(logout);
 
 
-		JPanel cm = new JPanel(null);
-		cm.setPreferredSize(new Dimension(800,600));
-		cm.setSize(800,600);
-		//cm.setBackground(Color.BLUE);
-		cm.setBounds(200,0,800,600);
-
-
-		JPanel cm2 = new JPanel(null);
-		cm2.setPreferredSize(new Dimension(800,600));
-		cm2.setSize(800,600);
-		//cm.setBackground(Color.BLUE);
-		cm2.setBounds(200,0,800,600);
-
-
-		map2 = new Map(600);
-		map2.setPreferredSize(new Dimension(600,600));
-		map2.setSize(600,600);
-		map2.setBounds(0,0,600,600);
-		cm2.add(map2);
-		
-		int mapsize = 40;
-		int tilesize = 15;
-		map = new JPanel(new GridLayout(mapsize,mapsize));
-		map.setPreferredSize(new Dimension(600,600));
-		map.setSize(600,600);
-		map.setBounds(0,0,600,600);
-		tiles = new Tile[mapsize][mapsize];
-		for(int i=0; i<mapsize; i++){
-			tiles[i] = new Tile[mapsize];
-			for(int j=0; j<mapsize; j++){
+		//CM COMPONENTS
+		mainCM = new MainPanel(new GridLayout(mapSize,mapSize));
+		tiles = new Tile[mapSize][mapSize];
+		int tileSize = mainCM.getWidth()/mapSize;
+		for(int i=0; i<mapSize; i++){
+			tiles[i] = new Tile[mapSize];
+			for(int j=0; j<mapSize; j++){
 				tiles[i][j] = new Tile(i, j);
-				tiles[i][j].setPreferredSize(new Dimension(tilesize, tilesize));
-				tiles[i][j].setSize(tilesize, tilesize);
+				tiles[i][j].setPreferredSize(new Dimension(tileSize, tileSize));
+				tiles[i][j].setSize(tileSize, tileSize);
 				tiles[i][j].addActionListener(this);
-				
+	
 				if( (i+j)%2 == 0 ) 
 					tiles[i][j].setBackground(new Color(102, 255, 51));
 				else
 					tiles[i][j].setBackground(new Color(51, 204, 51));
 				
-				map.add(tiles[i][j]);
+				mainCM.add(tiles[i][j]);
 			}
 		}
-		
-		cm.add(map);
-
-		
-
-		cmControls = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		cmControls.setSize(200,600);
-		cmControls.setPreferredSize(new Dimension(200,600));
-		cmControls.setBounds(600,0,200,600);
-		//cmControls.setBackground(Color.BLACK);
-		back = new JButton("Main Menu");
-		back.setSize(150,30);
-		back.setPreferredSize(new Dimension(150,30));
-		back.addActionListener(this);
-		cmControls.add(back);
 
 
-		cmControls2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		cmControls2.setSize(200,600);
-		cmControls2.setPreferredSize(new Dimension(200,600));
-		cmControls2.setBounds(600,0,200,600);
-		back2 = new JButton("Main Menu");
-		back2.setSize(150,30);
-		back2.setPreferredSize(new Dimension(150,30));
-		back2.addActionListener(this);
-		cmControls2.add(back2);
+	
+		sideCM = new SidePanel(new FlowLayout(FlowLayout.LEFT));
+		cmBack = new CButton("Main Menu");
+		cmBack.setSize(150,30);
+		cmBack.setPreferredSize(new Dimension(150,30));
+		cmBack.addActionListener(this);
+		sideCM.add(cmBack);
 
-		cm2.add(cmControls2);
+
+		//TM COMPONENTS
+		mainTM = new MainPanel(null);
+		mapTM = new Map(600);
+		mapTM.setPreferredSize(new Dimension(600,600));
+		mapTM.setSize(600,600);
+		mapTM.setBounds(0,0,600,600);
+		mainTM.add(mapTM);
 		
 
+		sideTM = new SidePanel(new FlowLayout(FlowLayout.LEFT));
+		tmBack = new CButton("Main Menu");
+		tmBack.setSize(150,30);
+		tmBack.setPreferredSize(new Dimension(150,30));
+		tmBack.addActionListener(this);
+		sideTM.add(tmBack);
+		
 
 		createBuildings();
 		bb = new ArrayList<JRadioButton>();
-		//JOptionPane.showMessageDialog(null, "blist size-"+bList.size());
 
 		ButtonGroup group = new ButtonGroup();
 
-		JRadioButton button1 = new JRadioButton("Remove Building");
-		bb.add(button1);
-		cmControls.add(button1);
-		group.add(button1);
+		JRadioButton removeButton = new JRadioButton("Remove Building");
+		bb.add(removeButton);
+		sideCM.add(removeButton);
+		group.add(removeButton);
 
 		for(int i=0; i<bList.size(); i++){
 			JRadioButton button = new JRadioButton(bList.get(i).getName()+'-'+bList.get(i).getQuantity());
 			bb.add(button);
-			cmControls.add(button);
+			sideCM.add(button);
 			group.add(button);
 		}
 
-		JScrollPane jsp2 = new JScrollPane(cmControls);
-		jsp2.setSize(200,600);
-		jsp2.setPreferredSize(new Dimension(200,600));
-		jsp2.setBounds(600,0,200,600);
-		cm.add(jsp2);
-		//cm.add(group);
+		
+		mainPanels = new MainPanel(new CardLayout());
+		mainPanels.add(mainLogin, "Login");
+		mainPanels.add(mainMenu, "Menu");
+		mainPanels.add(mainCM, "CM");
+		mainPanels.add(mainTM, "TM");
 
-		gp.add(loginp, "Login");
-		gp.add(cm, "Map Customization");
-		gp.add(cm2, "Troop Movement");
-		gp.add(mainmenu, "Main Menu");
+		sidePanels = new SidePanel(new CardLayout());
+		sidePanels.add(sideLogin, "Login");
+		sidePanels.add(sideMenu, "Menu");
+		sidePanels.add(sideCM, "CM");
+		sidePanels.add(sideTM, "TM");
 
+		JPanel mainPanel = new JPanel(null);
+		mainPanel.setSize(1000,600); 
+		mainPanel.add(sidePanels);
+		mainPanel.add(mainPanels);
+		mainPanel.add(chatPanel);
 
-		centerPanel.add(gp);
+			
+		add(mainPanel, BorderLayout.CENTER);
 
-
-		ta.setEditable(false);
-		add(centerPanel, BorderLayout.CENTER);
-
-		whoIsIn = new JButton("Who is in");
-		whoIsIn.addActionListener(this);
-		whoIsIn.setEnabled(false);		// you have to login before being able to Who is in
-
-		JPanel southPanel = new JPanel();
-		southPanel.add(whoIsIn);
-
-		JPanel ns = new JPanel(new GridLayout(1,2));
-		ns.add(southPanel);
-		ns.add(new JPanel());
-		//add(ns, BorderLayout.SOUTH);
-
+	
 		try {
 		    setIconImage(ImageIO.read(new File("images/logo.png")));
 		}
@@ -258,34 +213,15 @@ public class ClientGUI extends JFrame implements ActionListener {
 		setSize(1000, 600);
 		setVisible(true);
 		setResizable(false);
-		tf.requestFocus();
-
+		chatField.requestFocus();
 	}
 
 	// called by the Client to append text in the TextArea 
 	void append(String str) {
-		ta.append(str);
-		ta.setCaretPosition(ta.getText().length() - 1);
-		
+		chatArea.append(str);
+		chatArea.setCaretPosition(chatArea.getText().length() - 1);	
 	}
-	// called by the GUI is the connection failed
-	// we reset our buttons, label, textfield
-	void connectionFailed() {
-		login.setEnabled(true);
-		logout.setEnabled(false);
-		whoIsIn.setEnabled(false);
-		label.setText("Please login first");
-		tf.setText("");
-		// reset port number and host name as a construction time
-		tfPort.setText("" + defaultPort);
-		tfServer.setText(defaultHost);
-		// let the user change them
-		tfServer.setEditable(false);
-		tfPort.setEditable(false);
-		// don't react to a <CR> after the username
-		tf.removeActionListener(this);
-		connected = false;
-	}
+	
 
 	public void createBuildings(){
 		bList = new ArrayList<Building>();
@@ -319,41 +255,43 @@ public class ClientGUI extends JFrame implements ActionListener {
 		//bList.add(new Building("Air Sweeper", 2, 2, 1000, 2));
 		//bList.add(new Building("Cannon", 3, 3, 1260, 6));
 		//bList.add(new Building("Cannon", 3, 3, 1260, 6));
-		
-
-
 	}
 		
 	/*
 	* Button or JTextField clicked
 	*/
+	public void switchCards(String s){
+		System.out.println("Switching to "+s);
+		CardLayout cl = (CardLayout)(mainPanels.getLayout());
+    	cl.show(mainPanels, s);
+    	mainPanels.revalidate();
+    	CardLayout cl2 = (CardLayout)(sidePanels.getLayout());
+    	cl2.show(sidePanels, s);
+    	sidePanels.revalidate();
+	}
+
 	public void actionPerformed(ActionEvent e) {
 		Object o = e.getSource();
-		// if it is the Logout button
+
+
 		if(o == logout) {
 			client.sendMessage(new ChatMessage(ChatMessage.LOGOUT, ""));
-			ta.setText("");
+			chatArea.setText("");
 
-			CardLayout cl = (CardLayout)(gp.getLayout());
-    		cl.show(gp, "Login");
+			switchCards("Login");
 			return;
 		}
-		// if it the who is in button
-		if(o == whoIsIn) {
-			client.sendMessage(new ChatMessage(ChatMessage.WHOISIN, ""));				
-			return;
-		}
+		
 
-		if(o == customMap){
+		if(o == cmButton){
 			String baseConfig = getBaseConfig();
 			System.out.println("base config: "+baseConfig);
+			switchCards("CM");
 
-			CardLayout cl = (CardLayout)(gp.getLayout());
-    		cl.show(gp, "Map Customization");
 			return;
 		}
 
-		if(o == tMove){
+		if(o == tmButton){
 			ArrayList<Building> bArr = new ArrayList<Building>();
 			for(int i=0; i<40; i++){
 				for(int j=0; j<40; j++){
@@ -364,13 +302,19 @@ public class ClientGUI extends JFrame implements ActionListener {
 					bArr.add(new Building(tiles[i][j].getValue(), new Coordinate(j, i)));
 				}
 			}
-			map2.setBuildings(bArr);
-			CardLayout cl = (CardLayout)(gp.getLayout());
-    		cl.show(gp, "Troop Movement");
+			mapTM.setBuildings(bArr);
+
+			switchCards("TM");
 			return;
 		}
 
-		if(o == back){
+		// if it the who is in button
+		if(o == whoIsIn) {
+			client.sendMessage(new ChatMessage(ChatMessage.WHOISIN, ""));				
+			return;
+		}
+
+		if(o == cmBack){
 			ArrayList<Building> bArr = new ArrayList<Building>();
 			for(int i=0; i<40; i++){
 				for(int j=0; j<40; j++){
@@ -404,22 +348,20 @@ public class ClientGUI extends JFrame implements ActionListener {
 			
 			client.sendUDP(temp);	//allows saving of the current state of the map into the user's account
 
-			CardLayout cl = (CardLayout)(gp.getLayout());
-    		cl.show(gp, "Main Menu");
+			switchCards("Menu");
 
 
 			return;
 		}
-		if(o == back2){
-			CardLayout cl = (CardLayout)(gp.getLayout());
-    		cl.show(gp, "Main Menu");
+		if(o == tmBack){
+			switchCards("Menu");
+			
 			return;
 		}
 
 		for(int i=0; i<40; i++){
 			for(int j=0; j<40; j++){
 				if(o == tiles[i][j]){
-					
 					for(int k=0; k<bb.size(); k++){
 						if(bb.get(k).isSelected()){
 							if(bb.get(k).getText().equals("Remove Building")){
@@ -440,11 +382,12 @@ public class ClientGUI extends JFrame implements ActionListener {
 			}
 		}
 
+
 		// ok it is coming from the JTextField
 		if(connected) {
 			// just have to send the message
-			client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tf.getText()));				
-			tf.setText("");
+			client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, chatField.getText()));				
+			chatField.setText("");
 			return;
 		}
 		
@@ -480,11 +423,16 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 			unameUDP = username;
 
+			switchCards("Menu");
 			//fetching of the base_config string from the database
 
-			tf.setText("");
-			ta.setText("");
+			chatField.setText("");
+			chatArea.setText("");
+
 		}
+
+
+	
 	}
 
 	public String getBaseConfig(){
@@ -496,24 +444,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 		return connected;
 	}
 
-	public void validAuthenticate(){
-		label.setText("Enter your message below");
-		connected = true;
-		
-		// disable login button
-		login.setEnabled(false);
-		// enable the 2 buttons
-		logout.setEnabled(true);
-		whoIsIn.setEnabled(true);
-		// disable the Server and Port JTextField
-		tfServer.setEditable(false);
-		tfPort.setEditable(false);
-		// Action listener for when the user enter a message
-		tf.addActionListener(this);
-
-		CardLayout cl = (CardLayout)(gp.getLayout());
-		cl.show(gp, "Main Menu");
-	}
+	
 
 	public void removeBuilding(int i, int j){
 
@@ -640,6 +571,43 @@ public class ClientGUI extends JFrame implements ActionListener {
 		//tiles[i][j].setBackground(Color.BLUE);
 		bb.get(index).setText(parts[0] + "-" + newQ );
 	}
+
+	public void validAuthenticate(){
+		chatStatus.setText("Enter your message below");
+		connected = true;
+		
+		// disable login button
+		login.setEnabled(false);
+		// enable the 2 buttons
+		logout.setEnabled(true);
+		//whoIsIn.setEnabled(true);
+		// disable the Server and Port JTextField
+		tfServer.setEditable(false);
+		tfPort.setEditable(false);
+		// Action listener for when the user enter a message
+		chatField.addActionListener(this);
+
+		switchCards("Menu");
+	}
+
+	void connectionFailed() {
+		login.setEnabled(true);
+		logout.setEnabled(false);
+		//whoIsIn.setEnabled(false);
+		chatStatus.setText("Please login first");
+		chatField.setText("");
+		// reset port number and host name as a construction time
+		tfPort.setText("" + defaultPort);
+		tfServer.setText(defaultHost);
+		// let the user change them
+		tfServer.setEditable(false);
+		tfPort.setEditable(false);
+		// don't react to a <CR> after the username
+		chatField.removeActionListener(this);
+		connected = false;
+	}
+
+
 
 	// to start the whole thing the server
 	public static void main(String[] args) {

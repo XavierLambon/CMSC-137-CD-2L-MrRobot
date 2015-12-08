@@ -133,9 +133,9 @@ class Map extends JPanel implements ActionListener {
             int red = 255-green;
 
             g.setColor(Color.BLACK);
-            g.drawRect(unit.getPos().getX(),unit.getPos().getY()-5,unit.getWidth(),3);
+            g.drawRect(unit.getPos().getX(),unit.getPos().getY()-5,7,3);
             g.setColor(new Color(red%255, green%255, 0));
-            g.fillRect(unit.getPos().getX(),unit.getPos().getY()-5,(int)(unit.getWidth()*hpPercent),3);
+            g.fillRect(unit.getPos().getX(),unit.getPos().getY()-5,(int)(7*hpPercent),3);
            
         }
 
