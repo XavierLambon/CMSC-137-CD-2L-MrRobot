@@ -51,20 +51,29 @@ class Map extends JPanel implements ActionListener {
 
     public void actionPerformed(ActionEvent e) {
 
+        if(unitArr.size() > 0)
         for(Unit unit : unitArr){
+            if(unit == null){
+                unitArr.remove(unit);
+                if(unitArr.size() > 0) break;
+                continue; 
+            }
+
             if(unit.getHp() <= 0){
                 unit.stopTimer();
                 unitArr.remove(unit);
-                unit = null;
+                if(unitArr.size() > 0) break;
+                //unit = null;
+                continue;
             }
 
-            /*
+            
             for(Building building : buildingArr){
                 if(building.isDefense() && !building.isAttacking() && isInRange(unit, building)){
                     building.attack(unit);
                 }
             }
-            */
+            
             
             if(e.getSource() == unit.getTimer()){
                 if(unit.getPath().size() > 0){
@@ -128,14 +137,16 @@ class Map extends JPanel implements ActionListener {
 			g.setColor(unit.getColor());
         	g.fillRect(unit.getPos().getX()-((int)unit.getWidth()/2),unit.getPos().getY()-((int)unit.getHeight()/2),unit.getWidth(),unit.getHeight());
 		
-            float hpPercent = (float)(unit.getHp()/unit.getFull());
+            float hpPercent = unit.getHpPercent();
+            //System.out.println(hpPercent);
             int green = (int)(255*hpPercent);
             int red = 255-green;
 
+
             g.setColor(Color.BLACK);
-            g.drawRect(unit.getPos().getX(),unit.getPos().getY()-5,7,3);
-            g.setColor(new Color(red%255, green%255, 0));
-            g.fillRect(unit.getPos().getX(),unit.getPos().getY()-5,(int)(7*hpPercent),3);
+            g.drawRect(unit.getPos().getX()-((int)unit.getWidth()/2),unit.getPos().getY()-((int)unit.getHeight()/2)-5,unit.getWidth(),3);
+            g.setColor(new Color(red, green, 0));
+            g.fillRect(unit.getPos().getX()-((int)unit.getWidth()/2),unit.getPos().getY()-((int)unit.getHeight()/2)-5,(int)(unit.getWidth()*hpPercent),3);
            
         }
 

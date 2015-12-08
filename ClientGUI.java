@@ -91,7 +91,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 		login.addActionListener(this);
 
 
-		sideLogin = new SidePanel();
+		sideLogin = new SidePanel(new FlowLayout(FlowLayout.LEFT));
 		sideLogin.add(usernameField);
 		sideLogin.add(passwordField);
 		sideLogin.add(login);
@@ -102,7 +102,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 		mainMenu = new MainPanel();
 		mainMenu.add(new JLabel("Main Menu"));
 
-		sideMenu = new SidePanel();
+		sideMenu = new SidePanel(new FlowLayout(FlowLayout.LEFT));
 		cmButton = new CButton("Customize Map");
 		tmButton = new CButton("Troop Movement");
 		logout = new CButton("Logout");

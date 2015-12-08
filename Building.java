@@ -57,9 +57,9 @@ class Building implements ActionListener{
 
 
 	public Building(String name, Coordinate pos){
-		int width = 1, height = 1;
-		int hp = 1, full, quantity = 1, as=0, dmg=0, range=0;
-		boolean defense = false;
+		width = 1; height = 1;
+		hp = 1; full = 1; quantity = 1; as=0; dmg=0; range=0;
+		defense = false;
 
 
 		if(name.equals("Gold Mine")){
@@ -203,6 +203,8 @@ class Building implements ActionListener{
 			range = 9*tileDim;
 		}
 
+		full = hp;
+
 		quickInit(name, pos, width, height, hp, quantity, defense, as, dmg, range);
 	
 	}
@@ -224,9 +226,11 @@ class Building implements ActionListener{
 	public void actionPerformed(ActionEvent e){
 		if(e.getSource() == timer){
 			if(target.getHp() > 0){
-				target.setHp(target.getHp()-5);
+				target.setHp(target.getHp()-dmg);
+				System.out.println(target.getHp());
 			}
 			else{
+				//target.stopTimer();
 				attacking = false;
 				timer.stop();
 			}
@@ -239,6 +243,8 @@ class Building implements ActionListener{
 
 	public void attack(Unit u){
 		u.setHp(u.getHp()-dmg);
+        System.out.println(u.getHp());
+
 		target = u;
 		attacking = true;
 		timer.start();

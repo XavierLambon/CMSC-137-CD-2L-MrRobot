@@ -50,8 +50,9 @@ class Unit {
 	}
 
 	public Unit(String name, Coordinate pos, javax.swing.Timer timer){
-		int width = 7, height = 7;
-		int hp = 1, full = 1, ms = 1, as, dmg, range;
+		this.width = 7;
+		this.height = 7;
+		//int hp = 1, full = 1, ms = 1, as, dmg, range;
 
 		this.name = name;
 		this.pos = pos;
@@ -59,7 +60,7 @@ class Unit {
 
 		if(name.equals("Barbarian")){
 			this.hp = 125;
-			this.ms = 16*tileDim;
+			this.ms = 16;
 			this.as = 1000;
 			this.dmg = 30;
 			this.range = 1;
@@ -67,7 +68,7 @@ class Unit {
 		}
 		else if(name.equals("Archer")){
 			this.hp = 48;
-			this.ms = 24*tileDim;
+			this.ms = 24;
 			this.as = 1000;
 			this.dmg = 25;
 			this.range = 4*tileDim;
@@ -75,12 +76,16 @@ class Unit {
 		}
 
 		this.full = hp;
-		timer.setDelay(ms);
+		timer.setDelay(ms*2);
 		
 	}
 
 	public void setHp(int hp){
 		this.hp = hp;
+	}
+
+	public float getHpPercent(){
+		return (float)(this.hp/this.full);
 	}
 
 	public int getHp(){
