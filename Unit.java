@@ -65,6 +65,7 @@ class Unit {
 			this.dmg = 30;
 			this.range = 1;
 			this.color = new Color(255, 0, 0);
+			
 		}
 		else if(name.equals("Archer")){
 			this.hp = 48;

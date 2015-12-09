@@ -136,7 +136,6 @@ public class ClientGUI extends JFrame implements ActionListener {
 		}
 
 
-	
 		sideCM = new SidePanel(new FlowLayout(FlowLayout.LEFT));
 		cmBack = new CButton("Main Menu");
 		cmBack.setSize(150,30);
