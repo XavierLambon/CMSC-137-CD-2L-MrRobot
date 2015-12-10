@@ -72,7 +72,7 @@ class Unit {
 			this.ms = 24;
 			this.as = 1000;
 			this.dmg = 25;
-			this.range = 4*tileDim;
+			this.range = 35;//4
 			this.color = new Color(0, 0, 255);
 		}
 

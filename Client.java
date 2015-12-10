@@ -12,6 +12,8 @@ public class Client  {
 	private ObjectInputStream sInput;		// to read from the socket
 	private ObjectOutputStream sOutput;		// to write on the socket
 	private Socket socket;
+
+	private InetAddress serverIP; 
 	
 	private DatagramSocket clientSocket; //for the UDP
 	private InetAddress IPAddress;	//again, default
@@ -57,11 +59,13 @@ public class Client  {
 	 * To start the dialog
 	 */
 	 
-	public void createUDP(){
+	public void createUDP(InetAddress ip){
+		serverIP = ip;
 		try{
 			clientSocket = new DatagramSocket();	//initializes a UDP connection for this client
-			IPAddress = InetAddress.getByName("localhost");	//again, default
-			System.out.println("client port: "+clientSocket.getLocalPort());	//client UDP port
+			System.out.println("my ip address: "+InetAddress.getLocalHost());
+			IPAddress = InetAddress.getLocalHost();	//dynamic
+			//IPAddress = InetAddress.getByName("localhost");	//the default, 127.0.0.1 = replaced by the one above
 		}catch(Exception ec) {
 			display("Error creating a UDP connection:" + ec);
 		}
@@ -83,7 +87,6 @@ public class Client  {
 		receivePacket = new DatagramPacket(receiveData, receiveData.length);
 		String config = "";
 		try{
-			clientSocket.send(sendPacket);
 			clientSocket.receive(receivePacket);
 			config = new String(receivePacket.getData()).trim();
 			
@@ -289,7 +292,8 @@ public class Client  {
 					if(validated){
 						//calls the createUDP FUNCTION
 						if(!isUDP){
-							createUDP();
+							InetAddress addr = InetAddress.getByName("192.168.92.1");	//just rename the ip for the server
+							createUDP(addr);
 							isUDP = true;
 						}
 						

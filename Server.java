@@ -10,10 +10,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.ResultSet;
 
+
+import javax.swing.Timer;
+import java.awt.event.*;
+
 /*
  * The server that can be run both as a console application or a GUI
  */
-public class Server {
+public class Server implements ActionListener{
 	// a unique ID for each connection
 	private static int uniqueId;
 	// an ArrayList to keep the list of the Client
@@ -31,7 +35,13 @@ public class Server {
 	private static String path;
 	
 	private static DatagramSocket serverUDP;
-	//private static DatagramPacket sendPacket, receivePacket;
+
+	private static javax.swing.Timer lobbyTimer;
+	private static int cdTime;
+
+	//for the lobby
+	private static ArrayList<Players> lobby;
+	private InetAddress serverIP;
 	
 
 	//for the SQLite
@@ -56,6 +66,8 @@ public class Server {
 		sdf = new SimpleDateFormat("HH:mm:ss");
 		// ArrayList for the Client list
 		al = new ArrayList<ClientThread>();
+		lobby = new ArrayList<Players>();
+		lobbyTimer = new javax.swing.Timer(1000, this);
 	}
 
 	public Server(int port, int udpPort, ServerGUI sg, String path) {
@@ -70,6 +82,8 @@ public class Server {
 		sdf = new SimpleDateFormat("HH:mm:ss");
 		// ArrayList for the Client list
 		al = new ArrayList<ClientThread>();
+		lobby = new ArrayList<Players>();
+		lobbyTimer = new javax.swing.Timer(1000, this);
 	}
 	
 	public void start() {
@@ -81,7 +95,8 @@ public class Server {
 			ServerSocket serverSocket = new ServerSocket(port);
 			// the socket used for the UDP connection
 			serverUDP = new DatagramSocket(udpPort);
-			System.out.println("server port: "+serverUDP.getLocalPort());
+			serverIP = InetAddress.getLocalHost();
+			System.out.println("server port: "+serverIP.getHostAddress());
 			UDPThread udp = new UDPThread();	//here~
 			udp.start();
 			
@@ -220,6 +235,30 @@ public class Server {
 		
 	}
 	
+	static class Players{
+		InetAddress ipAdd;
+		int port;
+		String name;
+
+		Players(String name, DatagramPacket packet){
+			ipAdd = packet.getAddress();
+			port = packet.getPort();
+			this.name = name;
+		}
+
+		public String getPlayerIP(){
+			return ipAdd.getHostAddress();
+		}
+
+		public String getPlayerName(){
+			return name;
+		}
+
+		public int getPlayerPort(){
+			return port;
+		}
+	}
+
 	//A thread for the UDP. CURRENTLY STUCK HERE...
 	public static class UDPThread extends Thread{
 		
@@ -235,6 +274,7 @@ public class Server {
 					byte[] receiveData = new byte[1024];
 					byte[] sendData = new byte[1024];
 					DatagramPacket sendPacket, receivePacket;
+					Arrays.fill(receiveData, (byte)0);
 					receivePacket = new DatagramPacket(receiveData, receiveData.length);
 					serverUDP.receive(receivePacket);
 
@@ -243,7 +283,6 @@ public class Server {
 					udpString = msgFromClient.split("~");
 
 					//handles the UDP request from the client
-					System.out.println(msgFromClient);
 					String uname = udpString[1];
 					if(udpString[0].equals("mapdata")){
 						String parameter;
@@ -260,7 +299,7 @@ public class Server {
 							stmt = c.createStatement();
 							String statement = "UPDATE ACCOUNT SET base_config = '"+parameter+"' WHERE name = '"+uname+"'";
 							stmt.executeUpdate(statement);
-							
+
 						}catch(Exception e){
 							System.err.println(e.getClass().getName() + ": " + e.getMessage());
 							System.exit(0);
@@ -280,7 +319,6 @@ public class Server {
 								baseConfig = rs.getString("base_config");
 							}
 							//send here
-							System.out.println("USER'S CONFIG: "+baseConfig);
 							Arrays.fill(sendData, (byte)0);
 							sendData = baseConfig.getBytes();
 							InetAddress IPAddress = receivePacket.getAddress();	//for sending the 
@@ -296,11 +334,42 @@ public class Server {
 							System.err.println(e.getClass().getName() + ": " + e.getMessage());
 							System.exit(0);
 						}
+					}else if(udpString[0].equals("joinlobby")){
+						//handles the case when a player joins a lobby
+						Players newPlayer = new Players(udpString[1], receivePacket);
+						lobby.add(newPlayer);
+						if(lobby.size() == 1){
+							cdTime = 10;
+							lobbyTimer.start();
+						}
+
+
+						System.out.println();
+						System.out.println("List of current players in the lobby:");
+						for(Players x : lobby){
+							System.out.println("name: "+x.getPlayerName());
+							System.out.println("ip: "+x.getPlayerIP());
+							System.out.println("port: "+x.getPlayerPort());
+							System.out.println("===================");
+						}
+					}else if(udpString[0].equals("leave")){
+						//if a user decides to stop his/her wait in the lobby
+						Iterator<Players> it = lobby.iterator();
+						while (it.hasNext()) {
+							Players user = it.next();
+							if(user.getPlayerName().equals(udpString[1])){
+								it.remove();
+							}
+						}
+						if(lobby.size() == 0){
+							lobbyTimer.stop();
+
+						}
 					}
 					
-					System.out.println("Client IP: "+receivePacket.getAddress());
-					System.out.println("Client Port: "+receivePacket.getPort());
-					System.out.println("Client socketAddress: "+receivePacket.getSocketAddress());
+					//System.out.println("Client IP: "+receivePacket.getAddress());
+					//System.out.println("Client Port: "+receivePacket.getPort());
+					//System.out.println("Client socketAddress: "+receivePacket.getSocketAddress());
 				}catch(IOException e){
 					System.out.println("error: "+e);
 				}
@@ -309,6 +378,76 @@ public class Server {
 		
 		
 	}
+
+	public void actionPerformed(ActionEvent e){
+		if(e.getSource() == lobbyTimer){
+			cdTime--;
+			System.out.println(cdTime);
+			if(cdTime == 0){
+				lobbyTimer.stop();
+
+				if(lobby.size() > 1){
+					System.out.println("Do matching here");
+
+					int size = lobby.size();
+
+					int limit = (size%2 == 1)? (int)Math.floor((size+1)/2): (int)Math.floor(size/2);
+
+					ArrayList<Players> g1 = new ArrayList<Players>();
+					ArrayList<Players> g2 = new ArrayList<Players>();
+
+					for(int i=0; i<lobby.size(); i++){
+						if(i < limit){
+							g1.add(lobby.get(i));
+						}
+						else{
+							g2.add(lobby.get(i));
+						}
+					}
+
+
+					String g1Names = "";
+					for(Players p : g1){
+						g1Names += p.getPlayerName()+",";
+					}
+					String g2Names = "";
+					for(Players p : g2){
+						g2Names += p.getPlayerName()+",";
+					}
+
+					for(Players p : lobby){
+						byte[] sendData = new byte[1024];
+						if(g1.contains(p)){
+							sendData = g2Names.getBytes();
+						}
+						else{
+							sendData = g1Names.getBytes();
+						}
+
+						try{
+							DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName(p.getPlayerIP()), p.getPlayerPort());
+							serverUDP.send(sendPacket);
+						}catch(Exception ec) {
+							System.out.println("Error creating a UDP packet:" + ec);
+						}
+					}
+				}
+				else{
+					//Arrays.fill(sendData, (byte)0);
+					try{
+						byte[] sendData = "false".getBytes();
+						DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName(lobby.get(0).getPlayerIP()), lobby.get(0).getPlayerPort());
+						serverUDP.send(sendPacket);
+					}catch(Exception ec) {
+						System.out.println("Error creating a UDP packet:" + ec);
+					}
+
+					lobby.remove(0);
+				}
+			}
+		}
+	}
+
 
 	/** One instance of this thread will run for each client */
 	class ClientThread extends Thread {

@@ -7,13 +7,15 @@ import java.awt.image.*;
 import java.util.*;
 import java.io.*;
 
-class Map extends JPanel implements ActionListener {
-    int[][] logicMap;
+class Map extends JPanel implements ActionListener, Serializable{
 	int tileCount = 40;
     int dimension;
-    int range = 1;
+    String unitType = "";
     ArrayList<Unit> unitArr;
     ArrayList<Building> buildingArr;
+
+
+
 
     public Map(int dimension) {
         Map me = this;
@@ -27,11 +29,15 @@ class Map extends JPanel implements ActionListener {
 
         addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
+                if(unitType.equals("")){
+                    return;
+                }
+
             	Coordinate pos = new Coordinate(e.getX(),e.getY());
                 int ms = 5;
                 int as = 20;
                 int range = 1;
-                Unit unit = new Unit("Barbarian", pos, new javax.swing.Timer(ms, me));
+                Unit unit = new Unit(unitType, pos, new javax.swing.Timer(ms, me));
             	//Unit unit = new Unit(pos, range, new javax.swing.Timer(ms, me), as, ms);
                 unit.setTarget(findNearestBuilding(unit));
             	unit.setPath(aStarSearch(unit, unit.getTarget()));
@@ -40,6 +46,10 @@ class Map extends JPanel implements ActionListener {
             	repaint();
             }
         });
+    }
+
+    public void setUnitType(String s){
+        unitType = s;
     }
 
     public boolean isInRange(Unit u, Building b){
@@ -92,12 +102,20 @@ class Map extends JPanel implements ActionListener {
                     if(unit.getTarget().getHp() <= 0){
                         unit.stopTimer();
                         buildingArr.remove(unit.getTarget());
-                        unit.setTarget(findNearestBuilding(unit));
-                        if(unit.getTarget() != null){
-                            unit.setPath(aStarSearch(unit, unit.getTarget()));
-                            unit.startTimer();
+                        if(buildingArr.size() <= 0){
+                            for(Unit u : unitArr){
+                                u.stopTimer();
+                            }
                         }
-                        repaint();
+                        else{
+                            unit.setTarget(findNearestBuilding(unit));
+                            if(unit.getTarget() != null){
+                                unit.setPath(aStarSearch(unit, unit.getTarget()));
+                                unit.startTimer();
+                            }
+                            repaint();
+                        }
+
                     }
 
         		}
@@ -108,6 +126,11 @@ class Map extends JPanel implements ActionListener {
     public void setBuildings(ArrayList<Building> bArr){
         buildingArr = bArr;
         unitArr = new ArrayList<Unit>();
+        repaint();
+    }
+
+    public void setUnits(ArrayList<Unit> uArr){
+        unitArr = uArr;
         repaint();
     }
     
@@ -201,7 +224,7 @@ class Map extends JPanel implements ActionListener {
     	Coordinate g1 = new Coordinate(g.getX()-g.getDim(), g.getY()-g.getDim());
     	Coordinate u2 = new Coordinate(u.getX()+u.getDim(), u.getY()+u.getDim());
     	Coordinate g2 = new Coordinate(g.getX()+g.getDim(), g.getY()+g.getDim());
-    	if( u2.getX()+r >= g1.getX()  &&  u1.getX()-r <= g2.getX()  &&  u1.getY()+r <= g2.getY()  &&  u2.getY()-r >= g1.getY() ){
+    	if( u2.getX()+r >= g1.getX()  &&  u1.getX()-r <= g2.getX()  &&  u1.getY()-r <= g2.getY()  &&  u2.getY()+r >= g1.getY() ){
     		return true;
     	}
     	else return false;

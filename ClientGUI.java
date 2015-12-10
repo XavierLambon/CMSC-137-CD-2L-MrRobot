@@ -11,13 +11,16 @@ import java.io.*;
 /*
  * The Client with its GUI
  */
+
+
 public class ClientGUI extends JFrame implements ActionListener {
 	
 	int mapSize = 40;
 
 	Tile[][] tiles;
 	ArrayList<Building> bList;
-	ArrayList<JRadioButton> bb;
+	ArrayList<Building> uList;
+	ArrayList<JRadioButton> bb, ub;
 
 	private JLabel chatStatus;
 	private JTextField chatField;
@@ -29,7 +32,11 @@ public class ClientGUI extends JFrame implements ActionListener {
 	private JTextField usernameField;
 	private JTextField passwordField;
 
-	CButton cmButton, tmButton;
+	javax.swing.Timer timer;
+	JLabel mmLabel;
+	int cdTime;
+
+	CButton cmButton, tmButton, gsButton;
 	CButton cmBack;
 	CButton tmBack;
 
@@ -100,17 +107,22 @@ public class ClientGUI extends JFrame implements ActionListener {
 		
 		//MAIN MENU COMPONENTS 
 		mainMenu = new MainPanel();
-		mainMenu.add(new JLabel("Main Menu"));
+		mmLabel = new JLabel("Main Menu");
+		timer = new javax.swing.Timer(1000, this);
+		mainMenu.add(mmLabel);
 
 		sideMenu = new SidePanel(new FlowLayout(FlowLayout.LEFT));
 		cmButton = new CButton("Customize Map");
 		tmButton = new CButton("Troop Movement");
+		gsButton = new CButton("Game Start");
 		logout = new CButton("Logout");
 		cmButton.addActionListener(this);
 		tmButton.addActionListener(this);
+		gsButton.addActionListener(this);
 		logout.addActionListener(this);
 		sideMenu.add(cmButton);
-		sideMenu.add(tmButton);
+		//sideMenu.add(tmButton);
+		sideMenu.add(gsButton);
 		sideMenu.add(logout);
 
 
@@ -159,12 +171,30 @@ public class ClientGUI extends JFrame implements ActionListener {
 		tmBack.setPreferredSize(new Dimension(150,30));
 		tmBack.addActionListener(this);
 		sideTM.add(tmBack);
+
+		JRadioButton button;
+		ButtonGroup group;
+
+		ub = new ArrayList<JRadioButton>();
+		group = new ButtonGroup();
 		
+		button = new JRadioButton("Barbarian");
+		button.addActionListener(this);
+		ub.add(button);
+		sideTM.add(button);
+		group.add(button);
+
+		button = new JRadioButton("Archer");
+		button.addActionListener(this);
+		ub.add(button);
+		sideTM.add(button);
+		group.add(button);
+
 
 		createBuildings();
 		bb = new ArrayList<JRadioButton>();
 
-		ButtonGroup group = new ButtonGroup();
+		group = new ButtonGroup();
 
 		JRadioButton removeButton = new JRadioButton("Remove Building");
 		bb.add(removeButton);
@@ -172,7 +202,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 		group.add(removeButton);
 
 		for(int i=0; i<bList.size(); i++){
-			JRadioButton button = new JRadioButton(bList.get(i).getName()+'-'+bList.get(i).getQuantity());
+			button = new JRadioButton(bList.get(i).getName()+'-'+bList.get(i).getQuantity());
 			bb.add(button);
 			sideCM.add(button);
 			group.add(button);
@@ -228,21 +258,21 @@ public class ClientGUI extends JFrame implements ActionListener {
 		//resource
 		bList.add(new Building("Gold Mine", 3, 3, 960, 7));
 		bList.add(new Building("Elixir Collector", 3, 3, 960, 7));
-		bList.add(new Building("Dark Elixir Drill", 3, 3, 1160, 3));
+		//bList.add(new Building("Dark Elixir Drill", 3, 3, 1160, 3));
 		bList.add(new Building("Gold Storage", 3, 3, 2100, 4));
 		bList.add(new Building("Elixir Storage", 3, 3, 2100, 4));
-		bList.add(new Building("Dark Elixir Storage", 3, 3, 3200, 1));
-		bList.add(new Building("Builder Hut", 2, 2, 250, 5));
+		//bList.add(new Building("Dark Elixir Storage", 3, 3, 3200, 1));
+		//bList.add(new Building("Builder Hut", 2, 2, 250, 5));
 
 		//army
 		bList.add(new Building("Army Camp", 5, 5, 500, 4));
 		bList.add(new Building("Barracks", 3, 3, 860, 4));
-		bList.add(new Building("Dark Barracks", 3, 3, 900, 2));
-		bList.add(new Building("Laboratory", 4, 4, 950, 1));
-		bList.add(new Building("Spell Factory", 3, 3, 615, 1));
-		bList.add(new Building("Barbarian King Altar", 3, 3, 250, 1));
-		bList.add(new Building("Dark Spell Factory", 3, 3, 750, 1));
-		bList.add(new Building("Archer Queen Altar", 3, 3, 250, 1));
+		//bList.add(new Building("Dark Barracks", 3, 3, 900, 2));
+		//bList.add(new Building("Laboratory", 4, 4, 950, 1));
+		//bList.add(new Building("Spell Factory", 3, 3, 615, 1));
+		//bList.add(new Building("Barbarian King Altar", 3, 3, 250, 1));
+		//bList.add(new Building("Dark Spell Factory", 3, 3, 750, 1));
+		//bList.add(new Building("Archer Queen Altar", 3, 3, 250, 1));
 
 		//other
 		bList.add(new Building("Town Hall", 4, 4, 5500, 1));
@@ -251,6 +281,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 		//defense
 		bList.add(new Building("Archer Tower", 3, 3, 1050, 7));
 		bList.add(new Building("Cannon", 3, 3, 1260, 6));
+		bList.add(new Building("Wall", 1, 1, 7000, 275));
 		//bList.add(new Building("Air Sweeper", 2, 2, 1000, 2));
 		//bList.add(new Building("Cannon", 3, 3, 1260, 6));
 		//bList.add(new Building("Cannon", 3, 3, 1260, 6));
@@ -261,9 +292,13 @@ public class ClientGUI extends JFrame implements ActionListener {
 	*/
 	public void switchCards(String s){
 		System.out.println("Switching to "+s);
+
+
 		CardLayout cl = (CardLayout)(mainPanels.getLayout());
     	cl.show(mainPanels, s);
     	mainPanels.revalidate();
+
+
     	CardLayout cl2 = (CardLayout)(sidePanels.getLayout());
     	cl2.show(sidePanels, s);
     	sidePanels.revalidate();
@@ -271,6 +306,101 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 	public void actionPerformed(ActionEvent e) {
 		Object o = e.getSource();
+
+
+		for(JRadioButton u : ub){
+			if(o == u){
+				mapTM.setUnitType(u.getText());
+				System.out.println("Set unit type - "+u.getText());
+				return;
+			}
+		}
+
+		if(o == timer){
+
+			/*
+			mmLabel.setText("Main Menu ("+(cdTime--)+")");
+
+			if(cdTime == 0){
+				timer.stop();
+				gsButton.setText("Game Start");
+				mmLabel.setText("Main Menu");
+
+				ArrayList<Building> bArr = new ArrayList<Building>();
+				
+				String temp = "Elixir Collector-24,8-960|Elixir Collector-31,8-960|Gold Mine-17,10-960|Elixir Collector-25,21-960|Elixir Collector-11,22-960";
+				String[] bs = temp.split("\\|");
+				for(String b : bs){
+					String[] bParts = b.split("-");
+					String[] cParts = bParts[1].split(",");
+					int x = Integer.parseInt(cParts[0].trim());
+					int y = Integer.parseInt(cParts[1].trim());
+
+					Building tb = new Building(bParts[0], new Coordinate(x,y));
+					tb.setHp(Integer.parseInt(bParts[2].trim()));
+
+					bArr.add(tb);
+				}
+
+
+
+				mapTM.setBuildings(bArr);
+				switchCards("TM");
+			}
+			*/
+
+			return;
+		}
+
+		if(o == gsButton){
+
+			if(timer.isRunning()){
+				//timer.stop();
+				gsButton.setText("Game Start");
+				mmLabel.setText("Main Menu");
+				//sends the leave command
+				client.sendUDP("leave~"+unameUDP);
+				return;
+			}
+			//sends the joinlobby command
+			client.sendUDP("joinlobby~"+unameUDP);
+			//gsButton.setText("Game Stop");
+			String serverResp = client.receiveUDP();
+
+			if(serverResp.trim().equals("false")){
+
+				//place false handler here
+
+			}else{
+
+				String[] enemies = serverResp.trim().split(",");
+				ArrayList<Building> bArr = new ArrayList<Building>();
+				String mapConfig = getBaseConfig(enemies[0]);
+				String[] bs = mapConfig.split("\\|");
+				for(String b : bs){
+
+					String[] bParts = b.split("-");
+					String[] cParts = bParts[1].split(",");
+					int x = Integer.parseInt(cParts[0].trim());
+					int y = Integer.parseInt(cParts[1].trim());
+
+					Building tb = new Building(bParts[0], new Coordinate(x,y));
+					tb.setHp(Integer.parseInt(bParts[2].trim()));
+					bArr.add(tb);
+
+				}
+
+				mapTM.setBuildings(bArr);
+				switchCards("TM");
+
+
+			}
+
+			//System.out.println(serverResp);
+			//cdTime = 10;
+			//timer.start();
+			return;
+		}
 
 
 		if(o == logout) {
@@ -285,13 +415,46 @@ public class ClientGUI extends JFrame implements ActionListener {
 		if(o == cmButton){
 			String baseConfig = getBaseConfig();
 			System.out.println("base config: "+baseConfig);
+
+
+			
+			for(int i=0; i<mapSize; i++){
+				for(int j=0; j<mapSize; j++){
+					tiles[i][j].setValue("");
+				}
+			}
+			
+
+			if(!baseConfig.equals("")){
+
+				String[] bs = baseConfig.split("\\|");
+				for(String b : bs){
+					String[] bParts = b.split("-");
+					String[] cParts = bParts[1].split(",");
+					int x = Integer.parseInt(cParts[0].trim());
+					int y = Integer.parseInt(cParts[1].trim());
+					
+					int index = 0;
+					for(int i=0; i<bb.size(); i++){
+						if(bb.get(i).getText().split("-")[0].trim().equals(bParts[0])){
+							index = i;
+							break;
+						}
+					}
+					insertBuilding(y, x, index);
+				}
+			}
+
 			switchCards("CM");
 
 			return;
 		}
 
 		if(o == tmButton){
+
 			ArrayList<Building> bArr = new ArrayList<Building>();
+
+			
 			for(int i=0; i<40; i++){
 				for(int j=0; j<40; j++){
 					if(tiles[i][j].getValue().equals("") || tiles[i][j].getValue().contains("-")){
@@ -301,6 +464,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 					bArr.add(new Building(tiles[i][j].getValue(), new Coordinate(j, i)));
 				}
 			}
+			
 			mapTM.setBuildings(bArr);
 
 			switchCards("TM");
@@ -374,7 +538,6 @@ public class ClientGUI extends JFrame implements ActionListener {
 						}
 					}
 
-
 					//JOptionPane.showMessageDialog(null, "i-"+i+" j-"+j);
 					return;
 				}
@@ -428,6 +591,8 @@ public class ClientGUI extends JFrame implements ActionListener {
 			chatField.setText("");
 			chatArea.setText("");
 
+			
+
 		}
 
 
@@ -436,6 +601,11 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 	public String getBaseConfig(){
 		client.sendUDP("getBase~"+unameUDP);
+		return client.receiveUDP();
+	}
+
+	public String getBaseConfig(String username){
+		client.sendUDP("getBase~"+username);
 		return client.receiveUDP();
 	}
 
