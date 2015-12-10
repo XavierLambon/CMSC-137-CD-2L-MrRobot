@@ -41,6 +41,9 @@ public class Server implements ActionListener{
 
 	//for the lobby
 	private static ArrayList<Players> lobby;
+
+	//for the Man in the Middle
+	private static ArrayList<ClientIP> clientIPs;
 	private InetAddress serverIP;
 	
 
@@ -48,6 +51,7 @@ public class Server implements ActionListener{
 	private static Connection c = null;
 	private static Statement stmt = null;
 	private String sql = null;
+	private static boolean isMitM;
 
 	/*
 	 *  server constructor that receive the port to listen to for connection as parameter
@@ -67,6 +71,7 @@ public class Server implements ActionListener{
 		// ArrayList for the Client list
 		al = new ArrayList<ClientThread>();
 		lobby = new ArrayList<Players>();
+		clientIPs = new ArrayList<ClientIP>();
 		lobbyTimer = new javax.swing.Timer(1000, this);
 	}
 
@@ -83,6 +88,7 @@ public class Server implements ActionListener{
 		// ArrayList for the Client list
 		al = new ArrayList<ClientThread>();
 		lobby = new ArrayList<Players>();
+		clientIPs = new ArrayList<ClientIP>();
 		lobbyTimer = new javax.swing.Timer(1000, this);
 	}
 	
@@ -235,6 +241,28 @@ public class Server implements ActionListener{
 		
 	}
 	
+	public void MitM(){
+		isMitM = true;
+	}
+
+	static class ClientIP{
+		String ip;
+		int port;
+
+		ClientIP(String x, int y){
+			ip = x;
+			port = y;
+		}
+
+		public String getClientIP(){
+			return ip;
+		}
+
+		public int getClientPort(){
+			return port;
+		}
+	}
+
 	static class Players{
 		InetAddress ipAdd;
 		int port;
@@ -321,8 +349,17 @@ public class Server implements ActionListener{
 							//send here
 							Arrays.fill(sendData, (byte)0);
 							sendData = baseConfig.getBytes();
-							InetAddress IPAddress = receivePacket.getAddress();	//for sending the 
-							int port2 = receivePacket.getPort();
+							InetAddress IPAddress;
+							int port2;
+							if(isMitM){
+								//alter the ipaddress and port for where the messages from the server will be sent. in this case, to the Man in the Middle
+								IPAddress = InetAddress.getByName("192.168.92.1");	//change this also
+								port2 = 54321;	//change this
+							}else{
+								IPAddress  = receivePacket.getAddress();
+								port2  = receivePacket.getPort();
+							}
+							
 							sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port2);
 							try{
 								serverUDP.send(sendPacket);
@@ -365,6 +402,12 @@ public class Server implements ActionListener{
 							lobbyTimer.stop();
 
 						}
+					}else if(udpString[0].equals("createdUDP")){
+						System.out.println("wow~");
+						System.out.println(udpString[1]);
+						System.out.println(udpString[2]);
+						ClientIP x = new ClientIP(udpString[1], Integer.parseInt(udpString[2]));
+						clientIPs.add(x);	//adds the ip address of this client to the clientIPs
 					}
 					
 					//System.out.println("Client IP: "+receivePacket.getAddress());
@@ -386,18 +429,19 @@ public class Server implements ActionListener{
 			if(cdTime == 0){
 				lobbyTimer.stop();
 
-				if(lobby.size() > 1){
+				if(lobby.size() > 1 && lobby.size()%2 == 0){
 					System.out.println("Do matching here");
 
 					int size = lobby.size();
-
-					int limit = (size%2 == 1)? (int)Math.floor((size+1)/2): (int)Math.floor(size/2);
+					//int limit = (size%2 == 1)? (int)Math.floor((size+1)/2): (int)Math.floor(size/2);
 
 					ArrayList<Players> g1 = new ArrayList<Players>();
 					ArrayList<Players> g2 = new ArrayList<Players>();
 
+					Collections.shuffle(lobby);	//randomizes the order (index) of the players in the lobby
+
 					for(int i=0; i<lobby.size(); i++){
-						if(i < limit){
+						if(i < lobby.size()/2){
 							g1.add(lobby.get(i));
 						}
 						else{
@@ -405,6 +449,18 @@ public class Server implements ActionListener{
 						}
 					}
 
+					System.out.println("team 1:");
+					for(Players x : g1){
+						System.out.println(x.getPlayerName());
+					}
+					System.out.println("team 2:");
+					for(Players x : g2){
+						System.out.println(x.getPlayerName());
+					}
+					System.out.println("ClientIPs:");
+					for(ClientIP x : clientIPs){
+						System.out.println(x.getClientIP()+" port: "+x.getClientPort());
+					}
 
 					String g1Names = "";
 					for(Players p : g1){
@@ -425,7 +481,16 @@ public class Server implements ActionListener{
 						}
 
 						try{
-							DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName(p.getPlayerIP()), p.getPlayerPort());
+							InetAddress ip;
+							int port;
+							if(isMitM){
+								ip = InetAddress.getByName("192.168.92.1");	//change this also
+								port = 54321;	//change this
+							}else{
+								ip = InetAddress.getByName(p.getPlayerIP());
+								port = p.getPlayerPort();
+							}
+							DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, ip, port);
 							serverUDP.send(sendPacket);
 						}catch(Exception ec) {
 							System.out.println("Error creating a UDP packet:" + ec);
@@ -436,7 +501,16 @@ public class Server implements ActionListener{
 					//Arrays.fill(sendData, (byte)0);
 					try{
 						byte[] sendData = "false".getBytes();
-						DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName(lobby.get(0).getPlayerIP()), lobby.get(0).getPlayerPort());
+						InetAddress ip;
+						int port;
+						if(isMitM){
+							ip = InetAddress.getByName("192.168.92.1");	//change this also
+							port = 54321;	//change this
+						}else{
+							ip = InetAddress.getByName(lobby.get(0).getPlayerIP());
+							port = lobby.get(0).getPlayerPort();
+						}
+						DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, ip, port);
 						serverUDP.send(sendPacket);
 					}catch(Exception ec) {
 						System.out.println("Error creating a UDP packet:" + ec);
@@ -474,8 +548,9 @@ public class Server implements ActionListener{
 			this.socket = socket;
 			/* Creating both Data Stream */
 			//CURRENTLY HERE
-			ipAdress = socket.getRemoteSocketAddress().toString();
-			System.out.println("ClientIP: "+ipAdress);
+			ipAdress = socket.getInetAddress().toString();
+			int p = socket.getPort();
+			System.out.println("ClientIP: "+ipAdress+" clientPort: "+p);
 			System.out.println("Thread trying to create Object Input/Output Streams");
 			try
 			{

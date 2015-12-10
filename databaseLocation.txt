@@ -1,1 +1,1 @@
-C:\Users\COMMIT\Desktop\coc\database\database.sqlite
+C:\Users\user1\Desktop\coc\database\database.sqlite

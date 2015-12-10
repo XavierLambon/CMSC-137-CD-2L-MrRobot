@@ -65,6 +65,8 @@ public class Client  {
 			clientSocket = new DatagramSocket();	//initializes a UDP connection for this client
 			System.out.println("my ip address: "+InetAddress.getLocalHost());
 			IPAddress = InetAddress.getLocalHost();	//dynamic
+			int port = clientSocket.getLocalPort();
+			sendUDP("createdUDP~"+IPAddress.getHostAddress()+"~"+port);
 			//IPAddress = InetAddress.getByName("localhost");	//the default, 127.0.0.1 = replaced by the one above
 		}catch(Exception ec) {
 			display("Error creating a UDP connection:" + ec);
